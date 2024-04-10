@@ -23,4 +23,7 @@ RUN useradd -m -u 1000 -g 1000 -o -s /bin/bash pixivUtil
 RUN chown -R 1000:1000 /workdir
 USER 1000:1000
 
-CMD ["uvicorn", "PixivServer.app:app", "--host", "0.0.0.0", "--port", "8000"]
+# more configurations
+ENV LOG_LEVEL="warning"
+
+CMD uvicorn PixivServer.app:app --host 0.0.0.0 --port 8000 --log-level $LOG_LEVEL

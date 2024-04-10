@@ -35,7 +35,7 @@ docker run -it --rm -p 8000:8000 \
     -e MATRIX_ACCESS_TOKEN=$MATRIX_ACCESS_TOKEN \
     -e MATRIX_ROOM=$MATRIX_ROOM \
     --name pixivutil-server \
-    pixivutil2-server
+    pixivutil-server
 ```
 
 ### Install from Source

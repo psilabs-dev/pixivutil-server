@@ -7,7 +7,6 @@ from PixivServer.service import pixiv
 from PixivServer.router import download, health, metadata, server
 
 logger = logging.getLogger(__name__)
-logging.basicConfig(level=logging.INFO)
 
 @asynccontextmanager
 async def lifespan(_: FastAPI):

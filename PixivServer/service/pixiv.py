@@ -125,13 +125,21 @@ class PixivUtilService(FastAPIService):
         global __log__
 
         # default configuration (overridden by existing config)
+
+        # settings
         __config__.downloadListDirectory = "./downloads"
         __config__.rootDirectory = "."
         __config__.dbPath = ".pixivUtil2/db/db.sqlite"
         __config__.useragent = "Mozilla/5.0"
+        __config__.verifyimage = True
         
-        __config__.filenameFormat = '{%member_id%} %artist%/{%image_id%} %title%/%page_number%'
-        __config__.filenameMangaFormat = '{%member_id%} %artist%/{%image_id%} %title%/%page_number%'
+        __config__.ffmpeg = "/usr/bin/ffmpeg"
+
+        __config__.filenameFormat = '{%member_id%} %artist%' + os.sep + '{%image_id%} %title%' + os.sep + 'p_0%page_number%'
+        __config__.filenameMangaFormat = '{%member_id%} %artist%' + os.sep + '{%image_id%} %title%' + os.sep + 'p_0%page_number%'
+        
+        # download control
+        __config__.alwaysCheckFileSize = True
 
         if not os.path.exists(configfile):
             os.makedirs(os.path.dirname(configfile), exist_ok=True)
