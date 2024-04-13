@@ -3,31 +3,49 @@ from fastapi import FastAPI, Response
 import logging
 import time
 
-from PixivServer.service import pixiv
-from PixivServer.router import download, health, metadata, server
+from PixivServer import notification
+from PixivServer.service import *
+from PixivServer.router import *
 
 logger = logging.getLogger(__name__)
-logging.basicConfig(level=logging.INFO)
 
 @asynccontextmanager
 async def lifespan(_: FastAPI):
     # startup actions
-    pixiv.service.open()
+    notification.send_notification("Pixiv server started.")
+    pixiv_service.open()
+    subscription_service.open()
     yield
     # shutdown actions
-    pixiv.service.close()
+    pixiv_service.close()
+    subscription_service.close()
+    notification.send_notification("Pixiv server is shutting down.")
 
-logger.info("Setting 10s pause for rabbitmq startup...")
-# time.sleep(10)
 logger.info("Starting PixivUtil Server...")
 app = FastAPI(
     lifespan=lifespan
 )
 
-app.include_router(health.router)
-app.include_router(metadata.router)
-app.include_router(download.router)
-app.include_router(server.router)
+app.include_router(
+    health_router,
+    prefix="/api/health"
+)
+app.include_router(
+    meta_router,
+    prefix="/api/metadata"
+)
+app.include_router(
+    download_router,
+    prefix="/api/download"
+)
+app.include_router(
+    server_router,
+    prefix="/api/server"
+)
+app.include_router(
+    subscription_router,
+    prefix="/api/subscription"
+)
 
 @app.get("/")
 async def info():

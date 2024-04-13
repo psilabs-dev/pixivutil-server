@@ -6,7 +6,7 @@ from PixivServer.service import pixiv
 logger = logging.getLogger(__name__)
 router = APIRouter()
 
-@router.get("/api/health")
+@router.get("/")
 async def health_check() -> Response:
     logger.info("Received health check API call.")
 
@@ -15,7 +15,7 @@ async def health_check() -> Response:
         status_code=200,
     )
 
-@router.get("/api/health/pixiv")
+@router.get("/pixiv")
 async def pixiv_health_check() -> Response:
 
     cookie = pixiv.service.get_pixiv_cookie()

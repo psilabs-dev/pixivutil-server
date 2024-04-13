@@ -9,7 +9,7 @@ from PixivServer.service import pixiv
 logger = logging.getLogger(__name__)
 router = APIRouter()
 
-@router.get("/api/metadata/member/{member_id}")
+@router.get("/member/{member_id}")
 async def download_member_info_by_id(member_id: str):
     logger.info(f"Retrieving member info by ID: {member_id}.")
     if member_id is None:
@@ -37,7 +37,7 @@ async def download_member_info_by_id(member_id: str):
             status_code=500,
         )
 
-@router.get("/api/metadata/artwork/{artwork_id}")
+@router.get("/artwork/{artwork_id}")
 async def download_artwork_info_by_id(artwork_id: str):
     logger.info(f"Retrieving artwork info by ID: {artwork_id}.")
     if artwork_id is None:

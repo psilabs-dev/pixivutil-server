@@ -1,0 +1,19 @@
+services:
+
+  pixivutil-server:
+    volumes:
+      - /usr/local/share/ca-certificates:/usr/local/share/ca-certificates # comment out if not using self-signed certificate/ca is somewhere else
+    environment:
+      - REQUESTS_CA_BUNDLE=$REQUESTS_CA_BUNDLE # comment out if not using self-signed certificate/ca is somewhere else
+      - MATRIX_HOST=$MATRIX_HOST
+      - MATRIX_ACCESS_TOKEN=$MATRIX_ACCESS_TOKEN
+      - MATRIX_ROOM=$MATRIX_ROOM
+
+  pixivutil-worker:
+    volumes:
+      - /usr/local/share/ca-certificates:/usr/local/share/ca-certificates # comment out if not using self-signed certificate/ca is somewhere else
+    environment:
+      - REQUESTS_CA_BUNDLE=$REQUESTS_CA_BUNDLE # comment out if not using self-signed certificate/ca is somewhere else
+      - MATRIX_HOST=$MATRIX_HOST
+      - MATRIX_ACCESS_TOKEN=$MATRIX_ACCESS_TOKEN
+      - MATRIX_ROOM=$MATRIX_ROOM

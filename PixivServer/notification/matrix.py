@@ -1,6 +1,6 @@
 from matrix_client.client import MatrixClient
 
-from PixivServer.client.notification.default import NotificationClient
+from PixivServer.notification.default import NotificationClient
 from PixivServer.config import matrix
 
 class MatrixNotificationClient(NotificationClient):

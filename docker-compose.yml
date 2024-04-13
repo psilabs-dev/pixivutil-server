@@ -1,0 +1,36 @@
+
+services:
+
+  rabbitmq:
+    image: rabbitmq:3-management
+    container_name: rabbitmq
+    ports:
+      - 15672:15672
+
+  pixivutil-worker:
+    build: .
+    container_name: pixivutil-worker
+    command: celery -A PixivServer.worker.pixiv.celery worker --concurrency=1 --loglevel=info -B
+    environment:
+      - PIXIVUTIL_COOKIE=$PIXIVUTIL_COOKIE
+      - RABBITMQ_BROKER_URL=amqp://guest:guest@rabbitmq:5672
+    volumes:
+      - ./.pixivUtil2:/workdir/.pixivUtil2
+      - ./downloads:/workdir/downloads
+    depends_on:
+      - rabbitmq
+
+  pixivutil-server:
+    build: .
+    container_name: pixivutil-server
+    command: uvicorn PixivServer.app:app --host 0.0.0.0 --port 8000 --log-level info
+    volumes:
+      - ./.pixivUtil2:/workdir/.pixivUtil2
+      - ./downloads:/workdir/downloads
+    environment:
+      - PIXIVUTIL_COOKIE=$PIXIVUTIL_COOKIE
+      - RABBITMQ_BROKER_URL=amqp://guest:guest@rabbitmq:5672
+    ports:
+      - 8000:8000
+    depends_on:
+      - rabbitmq

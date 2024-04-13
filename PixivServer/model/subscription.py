@@ -1,0 +1,110 @@
+import logging
+import sqlite3
+from typing import List, Tuple
+
+from PixivServer.config.pixivutil import config as pixivutil_config
+
+logger = logging.getLogger(__name__)
+
+class SubscriptionDatabase:
+
+    def __init__(self):
+        self.db_path = pixivutil_config.db_path
+        self.connection: sqlite3.Connection = None
+    
+    def open(self):
+        self.connection = sqlite3.connect(self.db_path)
+        self.create_table()
+        
+    def create_table(self):
+        c = self.connection.cursor()
+        c.execute('''CREATE TABLE IF NOT EXISTS pixiv_server_member_subscription (
+                            member_id INTEGER PRIMARY KEY ON CONFLICT IGNORE,
+                            name TEXT,
+                            created_date DATE,
+                            last_modified_date DATE
+        )''')
+        self.connection.commit()
+
+    def check_member_id_exist(self, member_id: int) -> bool:
+        result = False
+        try:
+            c = self.connection.cursor()
+            c.execute(
+                '''SELECT 1 FROM pixiv_server_member_subscription WHERE member_id = ?''',
+                (member_id, )
+            )
+            result = c.fetchone()
+        except Exception as e:
+            logger.error(f'Failed to check existence of member ID: {member_id}')
+            raise e
+        finally:
+            c.close()
+        return result
+
+    def select_member_name_by_id(self, member_id: int) -> str:
+        result: str = None
+        try:
+            c = self.connection.cursor()
+            c.execute(
+                '''SELECT name FROM pixiv_server_member_subscription WHERE member_id = ?''',
+                (member_id, )
+            )
+            result = c.fetchone()
+        except Exception as e:
+            logger.error(f'Failed to retrieve member name for ID {member_id}.')
+            raise e
+        finally:
+            c.close()
+        return result
+
+    def select_member_subscriptions(self) -> List[Tuple[int, str]]:
+        results: List = None
+
+        try:
+            c = self.connection.cursor()
+            c.execute(
+                '''SELECT member_id, name FROM pixiv_server_member_subscription ORDER BY member_id''',
+            )
+            results = c.fetchall()
+        except Exception as e:
+            logger.error(f'Failed to export member subscriptions: ', e)
+            raise e
+        finally:
+            c.close()
+
+        return results
+
+    def add_member_subscription(self, member_id: int, member_name: str) -> bool:
+        try:
+            c = self.connection.cursor()
+            c.execute(
+                '''INSERT OR IGNORE INTO pixiv_server_member_subscription VALUES(?, ?, datetime('now'), datetime('now'))''',
+                (member_id, member_name, )
+            )
+            self.connection.commit()
+        except Exception as e:
+            logger.error(f'Failed to add member subscription: {member_id}', e)
+            raise e
+        finally:
+            c.close()
+        return True
+    
+    def remove_member_subscription(self, member_id: int) -> bool:
+        try:
+            c = self.connection.cursor()
+            c.execute(
+                '''DELETE FROM pixiv_server_member_subscription WHERE member_id = ?''',
+                (member_id, )
+            )
+            self.connection.commit()
+        except Exception as e:
+            logger.error(f"Failed to remove member {member_id} from subscription: ", e)
+            raise e
+        finally:
+            c.close()
+        return True
+
+    def close(self):
+        if self.connection is not None:
+            self.connection.close()

@@ -3,6 +3,8 @@ import os
 class PixivUtilConfig:
 
     def __init__(self):
+        self.db_path: str = "./.pixivUtil2/db/db.sqlite"
+
         self.useragent: str = os.getenv("PIXIVUTIL_USERAGENT")
 
         self.filenameFormat: str = os.getenv("PIXIVUTIL_FILENAME_FORMAT")
