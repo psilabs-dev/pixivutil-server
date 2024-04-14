@@ -3,16 +3,16 @@ import time
 from typing import Dict, List, Tuple
 
 from PixivServer.service.pixiv import service as pixiv_service
-from PixivServer.model.subscription import SubscriptionDatabase
-from PixivServer.model.pixivutil import PixivUtilDatabase
+from PixivServer.repository.subscription import SubscriptionRepository
+from PixivServer.repository.pixivutil import PixivUtilRepository
 
 logger = logging.getLogger(__name__)
 
 class SubscriptionService:
 
     def __init__(self):
-        self.subscription_db = SubscriptionDatabase()
-        self.pixivutil_db = PixivUtilDatabase()
+        self.subscription_db = SubscriptionRepository()
+        self.pixivutil_db = PixivUtilRepository()
 
     def open(self):
         # establish connection to database

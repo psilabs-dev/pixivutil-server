@@ -6,7 +6,7 @@ from PixivServer.config.pixivutil import config as pixivutil_config
 
 logger = logging.getLogger(__name__)
 
-class SubscriptionDatabase:
+class SubscriptionRepository:
 
     def __init__(self):
         self.db_path = pixivutil_config.db_path

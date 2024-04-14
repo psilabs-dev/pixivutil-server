@@ -2,7 +2,7 @@ from celery import Celery
 from celery.signals import setup_logging, worker_init, worker_shutdown
 import logging
 
-from PixivServer import notification
+from PixivServer.client import notification
 from PixivServer.config.rabbitmq import config as rabbitmq_config
 from PixivServer.config.worker import config as worker_config
 from PixivServer.service.pixiv import service as pixiv_service
@@ -41,9 +41,8 @@ def run_artist_subscription_job():
     logger.info('Running scheduled member subscription job...')
     new_artworks_by_member_names = subscription_service.run_member_subscription_job()
     member_names = list(new_artworks_by_member_names.keys())
-    message = '''Completed scheduled member subscription job.'''
     if member_names:
-        message += ' Downloaded new artworks from: ' + ', '.join(member_names)
+        message = '[Scheduled job]: Downloaded new artworks from: ' + ', '.join(member_names)
         notification.send_notification(message)
     return True
 

@@ -10,9 +10,10 @@ clients: List[default.NotificationClient] = list()
 if matrix.MatrixNotificationClient.is_available():
     clients.append(matrix.MatrixNotificationClient())
 
-def send_notification(message: str):
+async def send_notification(message: str):
     for client in clients:
         try:
             client.send_notification(message)
         except Exception:
             logger.error(f"An error occurred while sending the notification {message}: ", traceback.format_exc())
+    return message
