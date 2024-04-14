@@ -2,3 +2,5 @@ aiofiles==23.2.1
 fastapi==0.110.0
 uvicorn==0.29.0
 matrix_client==0.4.0
+celery==5.3.6
+sqlalchemy==2.0.29

@@ -6,7 +6,7 @@ from PixivServer.service import pixiv
 logger = logging.getLogger(__name__)
 router = APIRouter()
 
-@router.get("/api/server/cookie")
+@router.get("/cookie")
 async def get_cookie() -> Response:
     """
     Get current cookie.
@@ -17,7 +17,7 @@ async def get_cookie() -> Response:
         status_code=200,
     )
 
-@router.put("/api/server/cookie/{cookie}")
+@router.put("/cookie/{cookie}")
 async def update_cookie(cookie: str) -> Response:
     """
     Update (and validate) cookie.
@@ -33,7 +33,7 @@ async def update_cookie(cookie: str) -> Response:
         status_code=200,
     )
 
-@router.delete("/api/server/database")
+@router.delete("/database")
 async def reset_database() -> Response:
     pixiv.service.reset_database()
     return Response(
@@ -41,7 +41,7 @@ async def reset_database() -> Response:
         status_code=200,
     )
 
-@router.delete("/api/server/downloads")
+@router.delete("/downloads")
 async def reset_downloads() -> Response:
     pixiv.service.reset_downloads()
     return Response(

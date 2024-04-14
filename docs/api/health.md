@@ -1,6 +1,6 @@
 # Health API
 
-`GET /api/health`
+`GET /api/health/`
 
 Check if the server is running.
 
