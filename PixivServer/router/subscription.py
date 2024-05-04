@@ -3,7 +3,6 @@ from fastapi import APIRouter, Response
 from fastapi.responses import JSONResponse
 
 from PixivServer.service import subscription
-from PixivServer.client import notification
 
 logger = logging.getLogger(__name__)
 router = APIRouter()
@@ -25,7 +24,6 @@ async def add_member_subscription(member_id: str) -> Response:
     response = subscription.service.add_member_subscription(member_id)
     message = f'Subscribed to artist: {response.get("member_name")}.'
     response['message'] = message
-    notification.send_notification(message)
     return JSONResponse(response)
 
 @router.delete("/member/{member_id}")
@@ -36,5 +34,4 @@ async def delete_member_subscription(member_id: str) -> Response:
     response = subscription.service.delete_member_subscription(member_id)
     message = f'Removed subscription for artist: {response.get("member_name")}.'
     response['message'] = message
-    notification.send_notification(message)
     return JSONResponse(response)
