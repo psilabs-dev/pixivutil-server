@@ -55,3 +55,10 @@ def download_artworks_by_member_id(member_id: str):
     member_name = pixiv_service.get_member_name(member_id)
     pixiv_service.download_artworks_by_member_id(member_id)
     return True
+
+@celery.task(name="download_artworks_by_tag")
+def download_artworks_by_tag(tag: str):
+    logger.info(f"Downloading artwork by tag: {tag}.")
+    # TODO: verify the tag is retrieved.
+    pixiv_service.download_artworks_by_tag(tag)
+    return True
