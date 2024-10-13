@@ -1,3 +1,7 @@
+volumes:
+  rabbitmq:
+  pixivutil-data:
+  pixivutil-downloads:
 
 services:
 
@@ -9,8 +13,8 @@ services:
       start_period: 10s
     ports:
       - 15672:15672
-    # volumes:
-    #   - ./rabbitmq.conf:/etc/rabbitmq/conf.d/logging.conf
+    volumes:
+      - rabbitmq:/etc/rabbitmq/conf.d/logging.conf
 
   pixivutil-worker:
     build: .
@@ -19,9 +23,9 @@ services:
     environment:
       - PIXIVUTIL_COOKIE=$PIXIVUTIL_COOKIE
       - RABBITMQ_BROKER_URL=amqp://guest:guest@rabbitmq:5672
-    # volumes:
-    #   - ./.pixivUtil2:/workdir/.pixivUtil2
-    #   - ./downloads:/workdir/downloads
+    volumes:
+      - pixivutil-data:/workdir/.pixivUtil2
+      - pixivutil-downloads:/workdir/downloads
     depends_on:
       rabbitmq:
         condition: service_healthy
@@ -33,9 +37,9 @@ services:
     environment:
       - PIXIVUTIL_COOKIE=$PIXIVUTIL_COOKIE
       - RABBITMQ_BROKER_URL=amqp://guest:guest@rabbitmq:5672
-    # volumes:
-    #   - ./.pixivUtil2:/workdir/.pixivUtil2
-    #   - ./downloads:/workdir/downloads
+    volumes:
+      - pixivutil-data:/workdir/.pixivUtil2
+      - pixivutil-downloads:/workdir/downloads
     ports:
       - 8000:8000
     depends_on:

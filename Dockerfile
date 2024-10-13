@@ -14,9 +14,3 @@ COPY requirements.txt requirements.txt
 RUN pip3 install --no-cache-dir --upgrade -r requirements.txt
 COPY PixivServer PixivServer
 COPY VERSION VERSION
-
-# create and switch to user with uid:gid 1000:1000.
-RUN groupadd -g 1000 -o pixivUtil
-RUN useradd -m -u 1000 -g 1000 -o -s /bin/bash pixivUtil
-RUN chown -R 1000:1000 /workdir
-USER 1000:1000
