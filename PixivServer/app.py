@@ -4,8 +4,6 @@ import logging
 import time
 
 import PixivServer
-import PixivServer.client
-import PixivServer.client.notification
 from PixivServer.service import *
 from PixivServer.router import *
 
@@ -17,10 +15,8 @@ async def lifespan(_: FastAPI):
     time.sleep(5)
     pixiv_service.open()
     subscription_service.open()
-    PixivServer.client.notification.send_notification('Pixiv server started.')
     yield
     # shutdown actions
-    PixivServer.client.notification.send_notification('Pixiv server is shutting down.')
     pixiv_service.close()
     subscription_service.close()
 

@@ -18,11 +18,6 @@ Make a request to download an artwork:
 curl -X POST http://localhost:8000/api/download/artwork/{artwork-id-here}
 ```
 
-### Basic Matrix Notifications Support
-```sh
-docker compose -f docker-compose.yml -f docker-compose.matrix.yml up --build
-```
-
 ### API Reference
 
 - [download](/docs/api/download.md)
