@@ -13,8 +13,6 @@ services:
       start_period: 10s
     ports:
       - 15672:15672
-    volumes:
-      - rabbitmq:/etc/rabbitmq/conf.d/logging.conf
 
   pixivutil-worker:
     build: .
