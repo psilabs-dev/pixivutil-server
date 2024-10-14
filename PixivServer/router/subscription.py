@@ -16,7 +16,7 @@ async def get_subscribed_members() -> Response:
     response = {'subscriptions': subscribed_members_list}
     return JSONResponse(response)
 
-@router.post("/member/{member_id}")
+@router.put("/member/{member_id}")
 async def add_member_subscription(member_id: str) -> Response:
     """
     Add a artist to subscriptions.
