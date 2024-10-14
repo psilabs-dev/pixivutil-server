@@ -1,11 +1,15 @@
 import logging
 from fastapi import APIRouter, Response
 from fastapi.responses import JSONResponse
+from pydantic import BaseModel
 
 from PixivServer.service import subscription
 
 logger = logging.getLogger(__name__)
 router = APIRouter()
+
+class AddTagSubscriptionRequest(BaseModel):
+    tag_id: str
 
 @router.get("/member")
 async def get_subscribed_members() -> Response:
@@ -34,4 +38,33 @@ async def delete_member_subscription(member_id: str) -> Response:
     response = subscription.service.delete_member_subscription(member_id)
     message = f'Removed subscription for artist: {response.get("member_name")}.'
     response['message'] = message
+    return JSONResponse(response)
+
+@router.get("/tag")
+async def get_subscribed_tags() -> Response:
+    """
+    Get current list of subscriptions.
+    """
+    subscribed_tags_list = subscription.service.get_subscribed_tags()
+    response = {'subscriptions': subscribed_tags_list}
+    return JSONResponse(response)
+
+@router.put("/tag")
+async def add_tag_subscription(add_tag_subscription_request: AddTagSubscriptionRequest) -> Response:
+    """
+    Add a tag subscription using json field. Format:
+
+    {
+        "tag_id": string
+    }
+    """
+    tag_id = add_tag_subscription_request.tag_id
+    if len(tag_id) > 255:
+        message = f"Tag ID id exceeds 255 characters: {tag_id}"
+        response = {
+            "message": message
+        }
+        return JSONResponse(response)
+    response = subscription.service.add_tag_subscription(tag_id)
+    print("OK")
     return JSONResponse(response)

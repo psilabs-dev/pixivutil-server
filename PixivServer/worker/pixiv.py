@@ -31,7 +31,8 @@ def config_loggers(*args, **kwargs):
 
 @celery.on_after_configure.connect
 def setup_periodic_tasks(sender, **kwargs):
-    sender.add_periodic_task(worker_config.subscription_time_seconds, run_artist_subscription_job.s(), name='run some test')
+    sender.add_periodic_task(worker_config.subscription_time_seconds, run_artist_subscription_job.s(), name='Artist subscription job')
+    sender.add_periodic_task(worker_config.subscription_time_seconds, run_tag_subscription_job.s(), name='Tag subscription job')
 
 @celery.task(name='run_artist_subscription_job')
 def run_artist_subscription_job():
@@ -41,6 +42,14 @@ def run_artist_subscription_job():
     if member_names:
         message = '[Scheduled job]: Downloaded new artworks from: ' + ', '.join(member_names)
     return True
+
+@celery.task(name='run_tag_subscription_job')
+def run_tag_subscription_job():
+    '''
+    Since this is calling process_tags directly cannot extract logs.
+    '''
+    logger.info('Running scheduled tag subscription job...')
+    subscription_service.run_tag_subscription_job()
 
 @celery.task(name="download_artworks_by_id")
 def download_artworks_by_id(artwork_id: str):

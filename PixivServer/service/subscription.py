@@ -24,6 +24,18 @@ class SubscriptionService:
         self.subscription_db.close()
         self.pixivutil_db.close()
 
+    def run_tag_subscription_job(self) -> Dict[str, List[str]]:
+        logger.info("Triggering automated tag download job...")
+        subscribed_tags = self.get_subscribed_tags()
+
+        num_new_artworks = 0
+        new_artwork_titles_by_tag_id = dict()
+
+        for tag in subscribed_tags:
+            tag_id = tag[0]
+            pixiv_service.download_artworks_by_tag(tag_id)
+            logger.info(f"Downloaded artworks by tag: {tag_id}")
+
     def run_member_subscription_job(self) -> Dict[str, List[str]]:
         logger.info("Triggering automated artist download job...")
         subscribed_members = self.get_subscribed_members()
@@ -102,6 +114,31 @@ class SubscriptionService:
             }
         else:
             logger.info(f"Subscription for member ID {member_id} does not exist.")
+            return dict()
+
+    def get_subscribed_tags(self) -> List[Tuple[str]]:
+        logger.info("Getting tags subscribed to.")
+        subscribed_tags = self.subscription_db.select_tag_subscriptions()
+        if subscribed_tags is None:
+            logger.error("Failed to get tag subscriptions.")
+            return list()
+        return subscribed_tags
+
+    def add_tag_subscription(self, tag_id: str) -> Dict[str, str]:
+        self.subscription_db.add_tag_subscription(tag_id)
+        logger.info(f"Successfully added subscription for tag: {tag_id}")
+        return {
+            'tag_id': tag_id
+        }
+
+    def delete_tag_subscription(self, tag_id: str):
+        if self.subscription_db.check_tag_name_exist(tag_id):
+            self.subscription_db.remove_tag_subscription(tag_id)
+            return {
+                'tag_id': tag_id
+            }
+        else:
+            logger.info(f"Subscription for tag ID {tag_id} does not exist.")
             return dict()
 
 service = SubscriptionService()

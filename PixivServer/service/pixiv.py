@@ -228,7 +228,7 @@ class PixivUtilService:
         PixivTagsHandler.process_tags(
             sys.modules[__name__],
             __config__,
-            tag
+            tag.rstrip()
         )
 
 service = PixivUtilService()
