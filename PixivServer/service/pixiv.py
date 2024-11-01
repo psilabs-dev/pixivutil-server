@@ -119,6 +119,7 @@ class PixivUtilService:
         __config__.verifyimage = True
         
         __config__.ffmpeg = "/usr/bin/ffmpeg"
+        __config__.autoAddMember = True
 
         __config__.filenameFormat = '{%member_id%} %artist%' + os.sep + '{%image_id%} %title%' + os.sep + 'p_0%page_number%'
         __config__.filenameMangaFormat = '{%member_id%} %artist%' + os.sep + '{%image_id%} %title%' + os.sep + 'p_0%page_number%'
