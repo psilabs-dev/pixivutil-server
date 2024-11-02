@@ -224,12 +224,13 @@ class PixivUtilService:
             user_dir=self.downloads_folder,
         )
 
-    def download_artworks_by_tag(self, tag: str):
+    def download_artworks_by_tag(self, tag: str, bookmark_count: int):
         logger.info(f"Downloading by tag: {tag}")
         PixivTagsHandler.process_tags(
             sys.modules[__name__],
             __config__,
-            tag.rstrip()
+            tag.rstrip(),
+            bookmark_count=bookmark_count
         )
 
 service = PixivUtilService()

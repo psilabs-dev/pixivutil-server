@@ -124,8 +124,8 @@ class SubscriptionService:
             return list()
         return subscribed_tags
 
-    def add_tag_subscription(self, tag_id: str) -> Dict[str, str]:
-        self.subscription_db.add_tag_subscription(tag_id)
+    def add_tag_subscription(self, tag_id: str, bookmark_count: int) -> Dict[str, str]:
+        self.subscription_db.add_tag_subscription(tag_id, bookmark_count)
         logger.info(f"Successfully added subscription for tag: {tag_id}")
         return {
             'tag_id': tag_id

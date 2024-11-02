@@ -10,6 +10,7 @@ router = APIRouter()
 
 class AddTagSubscriptionRequest(BaseModel):
     tag_id: str
+    bookmark_count: int
 
 @router.get("/member")
 async def get_subscribed_members() -> Response:
@@ -59,12 +60,13 @@ async def add_tag_subscription(add_tag_subscription_request: AddTagSubscriptionR
     }
     """
     tag_id = add_tag_subscription_request.tag_id
+    bookmark_count = add_tag_subscription_request.bookmark_count
     if len(tag_id) > 255:
         message = f"Tag ID id exceeds 255 characters: {tag_id}"
         response = {
             "message": message
         }
         return JSONResponse(response)
-    response = subscription.service.add_tag_subscription(tag_id)
+    response = subscription.service.add_tag_subscription(tag_id, bookmark_count)
     print("OK")
     return JSONResponse(response)

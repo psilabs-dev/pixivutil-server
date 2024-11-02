@@ -28,6 +28,7 @@ class SubscriptionRepository:
         c.execute('''
                   CREATE TABLE IF NOT EXISTS pixiv_server_tag_subscription (
                   tag_id VARCHAR(255) PRIMARY KEY ON CONFLICT IGNORE,
+                  bookmark_count INTEGER,
                   created_date DATE,
                   last_modified_date DATE)
                   ''')
@@ -145,12 +146,19 @@ class SubscriptionRepository:
         
         return results
 
-    def add_tag_subscription(self, tag_id: str) -> bool:
+    def add_tag_subscription(self, tag_id: str, bookmark_count: int) -> bool:
         try:
             c = self.connection.cursor()
             c.execute(
-                '''INSERT OR IGNORE INTO pixiv_server_tag_subscription VALUES(?, datetime('now'), datetime('now'))''',
-                (tag_id, )
+                '''INSERT INTO pixiv_server_tag_subscription (tag_id, bookmark_count, created_date, last_modified_date) 
+                VALUES(?, ?, datetime('now'), datetime('now'))
+                ON CONFLICT(tag_id)
+                DO UPDATE SET
+                    bookmark_count = excluded.bookmark_count,
+                    created_date = excluded.created_date,
+                    last_modified_date = datetime('now')
+                ''',
+                (tag_id, bookmark_count, )
             )
             self.connection.commit()
         except Exception as e:
