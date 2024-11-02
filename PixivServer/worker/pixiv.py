@@ -66,8 +66,8 @@ def download_artworks_by_member_id(member_id: str):
     return True
 
 @celery.task(name="download_artworks_by_tag")
-def download_artworks_by_tag(tag: str):
-    logger.info(f"Downloading artwork by tag: {tag}.")
+def download_artworks_by_tag(tag: str, bookmark_count: int):
+    logger.info(f"Downloading artwork by tag: {tag}. Bookmark minimum: {bookmark_count}")
     # TODO: verify the tag is retrieved.
-    pixiv_service.download_artworks_by_tag(tag)
+    pixiv_service.download_artworks_by_tag(tag, bookmark_count)
     return True
