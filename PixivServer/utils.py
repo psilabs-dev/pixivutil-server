@@ -1,5 +1,6 @@
 import logging
-import os, shutil
+import os
+import shutil
 import traceback
 
 logger = logging.getLogger(__name__)
@@ -13,7 +14,7 @@ def clear_folder(folder: str) -> bool:
                 os.unlink(file_path)
             elif os.path.isdir(file_path):
                 shutil.rmtree(file_path)
-        except Exception as e:
+        except Exception:
             logger.error("Failed to delete: ", traceback.format_exc())
 
     return True

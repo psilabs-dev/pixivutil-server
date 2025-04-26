@@ -1,0 +1,56 @@
+volumes:
+  rabbitmq-data:
+  pixivutil-data:
+  pixivutil-downloads:
+
+services:
+
+  rabbitmq:
+    image: rabbitmq:3-management
+    container_name: rabbitmq
+    hostname: rabbitmq
+    healthcheck:
+      test: ["CMD", "rabbitmq-diagnostics", "-q", "ping"]
+      start_period: 10s
+    environment:
+      - RABBITMQ_NODENAME=rabbitmq
+    volumes:
+      - ./rabbitmq/rabbitmq.conf:/etc/rabbitmq/rabbitmq.conf:ro
+      - ./rabbitmq/conf.d/20-logging.conf:/etc/rabbitmq/conf.d/20-logging.conf:ro
+      - rabbitmq-data:/var/lib/rabbitmq:rw
+    ports:
+      - 127.0.0.1:15672:15672
+
+  pixivutil-worker:
+    build:
+      context: .
+      dockerfile: ./docker/PixivServer.Dockerfile
+    container_name: pixivutil-worker
+    command: ["celery", "-A", "PixivServer.worker.pixiv_worker", "worker", "--concurrency=1", "--loglevel=info", "-B"]
+    environment:
+      - PIXIVUTIL_COOKIE=$PIXIVUTIL_COOKIE
+      - RABBITMQ_BROKER_URL=amqp://guest:guest@rabbitmq:5672
+    volumes:
+      - pixivutil-data:/workdir/.pixivUtil2
+      - pixivutil-downloads:/workdir/downloads
+    depends_on:
+      rabbitmq:
+        condition: service_healthy
+
+  pixivutil-server:
+    build:
+      context: .
+      dockerfile: ./docker/PixivServer.Dockerfile
+    container_name: pixivutil-server
+    command: ["uvicorn", "PixivServer.app:app", "--host", "0.0.0.0", "--port", "8000", "--log-level", "info"]
+    environment:
+      - PIXIVUTIL_COOKIE=$PIXIVUTIL_COOKIE
+      - RABBITMQ_BROKER_URL=amqp://guest:guest@rabbitmq:5672
+    volumes:
+      - pixivutil-data:/workdir/.pixivUtil2
+      - pixivutil-downloads:/workdir/downloads
+    ports:
+      - 8000:8000
+    depends_on:
+      rabbitmq:
+        condition: service_healthy
