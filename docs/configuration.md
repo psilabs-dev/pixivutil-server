@@ -15,3 +15,7 @@ For more fine-tuned configuration, use `.pixivUtil2/conf/conf.ini` (refer to [Pi
 ## Environment Variable Configuration
 
 Supported environment variable overrides. See `PixivServer/configuration/pixivutil.py`.
+
+## Rabbitmq Docker Persistence
+
+See [issue](https://github.com/docker-library/rabbitmq/issues/106).
