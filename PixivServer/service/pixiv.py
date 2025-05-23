@@ -1,21 +1,25 @@
-import asyncio
 import os
 import sqlite3
 import sys
 import traceback
 
 import logging
-from typing import List
-
-from PixivServer.client.notification.matrix import MatrixNotificationClient
 
 sys.path.append('PixivUtil2')
 
-from PixivServer.client.notification.default import NotificationClient
-from PixivUtil2 import *
+from PixivUtil2 import (
+    PixivConfig, 
+    PixivBrowserFactory, 
+    PixivHelper, 
+    PixivImageHandler, 
+    PixivArtistHandler, 
+    PixivDBManager, 
+    PixivTagsHandler, 
+    PixivException, 
+    set_console_title,  # noqa: F401,
+)
 
-from PixivServer.config import pixivutil
-from PixivServer.service.default import FastAPIService
+from PixivServer.config.pixivutil import config as pixivutil_config
 from PixivServer.utils import clear_folder
 
 logger = logging.getLogger(__name__)
@@ -40,6 +44,7 @@ script_path = PixivHelper.module_path()
 op = ''
 ERROR_CODE = 0
 UTF8_FS = None
+DEBUG_SKIP_PROCESS_IMAGE = False
 DEBUG_SKIP_DOWNLOAD_IMAGE = False
 
 start_iv = False
@@ -64,56 +69,18 @@ class PixivDBManagerMultiThread(PixivDBManager):
         # allow sqlite connection on different threads
         self.conn = sqlite3.connect(target, timeout, check_same_thread=False)
 
-class PixivUtilService(FastAPIService):
+class PixivUtilService:
 
     def __init__(self) -> None:
         self.downloads_folder = "./downloads"
-        self.notification_clients: List[NotificationClient] = list()
-
-        if MatrixNotificationClient.is_available():
-            logger.info("Adding Matrix notification client.")
-            self.notification_clients.append(MatrixNotificationClient())
 
         pass
-
-    def send_notification(self, message):
-        for client in self.notification_clients:
-            client.send_notification(message)
 
     def load_environment_variables(self):
         "environment variable configuration"
         
-        if pixivutil.config.cookie:
-            __config__.cookie = pixivutil.config.cookie
-
-        if pixivutil.config.ffmpeg:
-            __config__.ffmpeg = pixivutil.config.ffmpeg
-
-        if pixivutil.config.filenameFormat:
-            __config__.filenameFormat = pixivutil.config.filenameFormat
-        if pixivutil.config.filenameInfoFormat:
-            __config__.filenameInfoFormat = pixivutil.config.filenameInfoFormat
-        if pixivutil.config.filenameMangaFormat:
-            __config__.filenameMangaFormat = pixivutil.config.filenameMangaFormat
-
-        if pixivutil.config.writeUgoiraInfo:
-            __config__.writeUgoiraInfo = pixivutil.config.writeUgoiraInfo
-        if pixivutil.config.createUgoira:
-            __config__.createUgoira = pixivutil.config.createUgoira
-        if pixivutil.config.createMkv:
-            __config__.createMkv = pixivutil.config.createMkv
-        if pixivutil.config.createWebm:
-            __config__.createWebm = pixivutil.config.createWebm
-        if pixivutil.config.createWebp:
-            __config__.createWebp = pixivutil.config.createWebp
-        if pixivutil.config.createGif:
-            __config__.createGif = pixivutil.config.createGif
-        if pixivutil.config.createApng:
-            __config__.createApng = pixivutil.config.createApng
-        if pixivutil.config.deleteUgoira:
-            __config__.deleteUgoira = pixivutil.config.deleteUgoira
-        if pixivutil.config.deleteZipFile:
-            __config__.deleteZipFile = pixivutil.config.deleteZipFile
+        if pixivutil_config.cookie:
+            __config__.cookie = pixivutil_config.cookie
 
         return
 
@@ -122,17 +89,8 @@ class PixivUtilService(FastAPIService):
         global __br__
         global __config__
         global __dbManager__
-        global __log__
-
-        # default configuration (overridden by existing config)
-        __config__.downloadListDirectory = "./downloads"
-        __config__.rootDirectory = "."
-        __config__.dbPath = ".pixivUtil2/db/db.sqlite"
-        __config__.useragent = "Mozilla/5.0"
-        
-        __config__.filenameFormat = '{%member_id%} %artist%/{%image_id%} %title%/%page_number%'
-        __config__.filenameMangaFormat = '{%member_id%} %artist%/{%image_id%} %title%/%page_number%'
-
+        global __log__        
+        # download control
         if not os.path.exists(configfile):
             os.makedirs(os.path.dirname(configfile), exist_ok=True)
             __config__.writeConfig(path=configfile)
@@ -152,14 +110,13 @@ class PixivUtilService(FastAPIService):
         if __br__ is None:
             __br__ = PixivBrowserFactory.getBrowser(config=__config__)
         self.login_pixiv(cookie)
-        self.send_notification("Started PixivUtil Server.")
         pass
 
     def close(self):
         PixivHelper.print_and_log("info", "Closing...")
-        self.send_notification("Closing PixivUtil Server...")
         # self.remove_database()
         __config__.writeConfig(path=configfile)
+        __dbManager__.close()
 
     def open_database(self):
         global __dbManager__
@@ -209,32 +166,37 @@ class PixivUtilService(FastAPIService):
         return data.artistName
     
     def get_artwork_name(self, artwork_id: int) -> str:
-        data = self.get_artwork_data(artwork_id)[0]
+        data, response = self.get_artwork_data(artwork_id)
+        if data is None:
+            raise PixivException("Cannot get artwork name; response: " + str(response))
         return data.imageTitle
 
-    def download_artwork_by_id(self, artwork_id: int, artwork_name: str=None):
+    def download_artwork_by_id(self, artwork_id: int):
         logger.info(f"Download by artwork ID: {artwork_id}")
-        artwork_name = self.get_artwork_name(artwork_id)
-        # self.send_notification(f"Downloading artwork: {artwork_name}")
-        PixivImageHandler.process_image(
+        return PixivImageHandler.process_image(
             sys.modules[__name__],
             __config__,
             image_id=artwork_id,
             useblacklist=False,
             user_dir=self.downloads_folder
         )
-        self.send_notification(f"Download complete: {artwork_name}")
 
-    def download_artworks_by_member_id(self, member_id: int, member_name: str=None):
+    def download_artworks_by_member_id(self, member_id: int):
         logger.info(f"Downloading by artist ID: {member_id}")
-        member_name = self.get_member_name(member_id)
-        # self.send_notification(f"Downloading artworks from: {member_name}")
         PixivArtistHandler.process_member(
             sys.modules[__name__],
             __config__,
             member_id=member_id,
             user_dir=self.downloads_folder,
         )
-        self.send_notification(f"Download artworks complete: {member_name}")
+
+    def download_artworks_by_tag(self, tag: str, bookmark_count: int):
+        logger.info(f"Downloading by tag: {tag}")
+        PixivTagsHandler.process_tags(
+            sys.modules[__name__],
+            __config__,
+            tag.rstrip(),
+            bookmark_count=bookmark_count
+        )
 
 service = PixivUtilService()

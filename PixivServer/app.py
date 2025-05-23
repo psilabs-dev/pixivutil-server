@@ -1,33 +1,62 @@
 from contextlib import asynccontextmanager
+import traceback
 from fastapi import FastAPI, Response
 import logging
 import time
 
-from PixivServer.service import pixiv
-from PixivServer.router import download, health, metadata, server
+import PixivServer
+import PixivServer.routers
+import PixivServer.routers.download
+import PixivServer.routers.health
+import PixivServer.routers.metadata
+import PixivServer.routers.server
+# import PixivServer.routers.subscription
+import PixivServer.service
+import PixivServer.service.pixiv
 
-logger = logging.getLogger(__name__)
-logging.basicConfig(level=logging.INFO)
+logger = logging.getLogger('uvicorn.pixivutil')
 
 @asynccontextmanager
 async def lifespan(_: FastAPI):
-    # startup actions
-    pixiv.service.open()
+    try:
+        logger.info("Setting up server.")
+        # startup actions
+        time.sleep(5)
+        PixivServer.service.pixiv.service.open()
+        # PixivServer.service.subscription_service.open()
+    except Exception as e:
+        print(f"Encountered exception during application setup: {traceback.format_exc()}")
+        raise e
     yield
     # shutdown actions
-    pixiv.service.close()
+    PixivServer.service.pixiv.service.close()
+    # PixivServer.service.subscription_service.close()
 
-logger.info("Setting 10s pause for rabbitmq startup...")
-# time.sleep(10)
 logger.info("Starting PixivUtil Server...")
 app = FastAPI(
     lifespan=lifespan
 )
 
-app.include_router(health.router)
-app.include_router(metadata.router)
-app.include_router(download.router)
-app.include_router(server.router)
+app.include_router(
+    PixivServer.routers.health.router,
+    prefix="/api/health"
+)
+app.include_router(
+    PixivServer.routers.metadata.router,
+    prefix="/api/metadata"
+)
+app.include_router(
+    PixivServer.routers.download.router,
+    prefix="/api/download"
+)
+app.include_router(
+    PixivServer.routers.server.router,
+    prefix="/api/server"
+)
+# app.include_router(
+#     PixivServer.routers.subscription.router,
+#     prefix="/api/subscription"
+# )
 
 @app.get("/")
 async def info():

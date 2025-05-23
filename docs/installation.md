@@ -9,50 +9,13 @@ This will clone the `PixivUtil2` repository.
 ## PixivUtil Web Server
 
 ### Install with Docker
-Build the Docker image.
+Build and run with Docker compose. A pixiv cookie is required at `PIXIVUTIL_COOKIE`.
 ```sh
-docker build -t pixivutil-server -f docker/Dockerfile .
+docker compose up --build
 ```
-Run bare web server (make the directories `.pixivUtil2` and `downloads` *before* starting container)
+Make a request to download an artwork:
 ```sh
-docker run -it --rm -p 8000:8000 \
-    -v ./.pixivUtil2:/workdir/.pixivUtil2 \
-    -v ./downloads:/workdir/downloads \
-    -e PIXIVUTIL_COOKIE=$PIXIVUTIL_COOKIE \
-    --name pixivutil-server \
-    pixivutil-server
-```
-### Basic Matrix Notifications Support
-If using Matrix notifications, run with additional environment variables.  (can remove `REQUESTS_CA_BUNDLE` if not using self-signed CA at `/usr/local/share/ca-certificates/ca.crt`)
-```sh
-docker run -it --rm -p 8000:8000 \
-    -v ./.pixivUtil2:/workdir/.pixivUtil2 \
-    -v ./downloads:/workdir/downloads \
-    -v /usr/local/share/ca-certificates:/usr/local/share/ca-certificates \
-    -e PIXIVUTIL_COOKIE=$PIXIVUTIL_COOKIE \
-    -e REQUESTS_CA_BUNDLE=$REQUESTS_CA_BUNDLE \
-    -e MATRIX_HOST=$MATRIX_HOST \
-    -e MATRIX_ACCESS_TOKEN=$MATRIX_ACCESS_TOKEN \
-    -e MATRIX_ROOM=$MATRIX_ROOM \
-    --name pixivutil-server \
-    pixivutil2-server
-```
-
-### Install from Source
-Install dependencies.
-```sh
-pip install -r requirements.txt
-pip install -r PixivUtil2/requirements.txt
-```
-Run the web server.
-```sh
-uvicorn PixivServer.app:app --host 0.0.0.0 --port 8000
-```
-
-### Post Installation
-Verify the server is running:
-```sh
-curl localhost:8000/api/health
+curl -X POST http://localhost:8000/api/download/artwork/{artwork-id-here}
 ```
 
 ### API Reference
