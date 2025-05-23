@@ -9,8 +9,8 @@ For more fine-tuned configuration, use `.pixivUtil2/conf/conf.ini` (refer to [Pi
 - `rootDirectory="."`
 - `dbPath=".pixivUtil2/db/db.sqlite"`
 - `useragent="Mozilla/5.0"`
-- `filenameFormat='{%member_id%} %artist%/{%image_id%} %title%/%page_number%'`
-- `filenameMangaFormat='{%member_id%} %artist%/{%image_id%} %title%/%page_number%'`
+- `filenameFormat="%member_id%"/pixiv_%image_id%/%page_number%"`
+- `filenameMangaFormat="%member_id%"/pixiv_%image_id%/%page_number%"`
 
 ## Environment Variable Configuration
 
