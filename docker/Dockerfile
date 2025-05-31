@@ -1,7 +1,7 @@
 FROM python:3.11
 
 # Install PixivUtil2 requirements
-RUN apt-get update && apt-get install -y ffmpeg && \
+RUN apt-get update && apt-get install -y ffmpeg sqlite3 && \
     rm -rf /var/lib/apt/lists/*
 
 WORKDIR /workdir
