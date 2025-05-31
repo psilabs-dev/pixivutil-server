@@ -2,6 +2,7 @@ import logging
 import os
 import shutil
 import traceback
+from datetime import datetime
 
 logger = logging.getLogger(__name__)
 
@@ -18,3 +19,13 @@ def clear_folder(folder: str) -> bool:
             logger.error("Failed to delete: ", traceback.format_exc())
 
     return True
+
+def is_valid_date(date: str) -> bool:
+    """
+    Check if a date string is in the format YYYY-MM-DD.
+    """
+    try:
+        datetime.strptime(date, "%Y-%m-%d")
+        return True
+    except ValueError:
+        return False

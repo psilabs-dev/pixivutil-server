@@ -1,5 +1,6 @@
 import random
 import time
+import traceback
 from celery import Celery
 from celery.signals import setup_logging, worker_init, worker_shutdown
 import logging
@@ -8,6 +9,7 @@ import PixivServer
 # from PixivServer.config.worker import config as worker_config
 import PixivServer.service
 import PixivServer.service.pixiv
+from PixivServer.models.pixiv import DownloadArtworkByIdRequest, DownloadArtworksByMemberIdRequest, DownloadArtworksByTagsRequest
 
 logger = logging.getLogger(__name__)
 
@@ -60,25 +62,43 @@ def config_loggers(*args, **kwargs):
 #     subscription_service.run_tag_subscription_job()
 
 @pixiv_worker.task(name="download_artworks_by_id", queue='pixivutil-queue')
-def download_artworks_by_id(artwork_id: str):
-    logger.info(f"Downloading artwork by ID: {artwork_id}.")
-    # artwork_name = PixivServer.service.pixiv.service.get_artwork_name(artwork_id)
-    PixivServer.service.pixiv.service.download_artwork_by_id(artwork_id)
-    __job_sleep()
-    return True
+def download_artworks_by_id(request_dict: dict):
+    try:
+        request = DownloadArtworkByIdRequest(**request_dict)
+        PixivServer.service.pixiv.PixivHelper.print_and_log("info", f"Downloading artwork by ID: {request.artwork_id}.")
+        PixivServer.service.pixiv.service.download_artwork_by_id(request)
+        return True
+    except Exception as e:
+        logger.error(f"Error in download_artworks_by_id worker: {str(e)}")
+        logger.error(traceback.format_exc())
+        raise
+    finally:
+        __job_sleep()
 
 @pixiv_worker.task(name="download_artworks_by_member_id", queue='pixivutil-queue')
-def download_artworks_by_member_id(member_id: str):
-    logger.info(f"Downloading artworks by member ID: {member_id}.")
-    # member_name = PixivServer.service.pixiv.service.get_member_name(member_id)
-    PixivServer.service.pixiv.service.download_artworks_by_member_id(member_id)
-    __job_sleep()
-    return True
+def download_artworks_by_member_id(request_dict: dict):
+    try:
+        request = DownloadArtworksByMemberIdRequest(**request_dict)
+        PixivServer.service.pixiv.PixivHelper.print_and_log("info", f"Downloading artworks by member ID: {request.member_id}.")
+        PixivServer.service.pixiv.service.download_artworks_by_member_id(request)
+        return True
+    except Exception as e:
+        logger.error(f"Error in download_artworks_by_member_id worker: {str(e)}")
+        logger.error(traceback.format_exc())
+        raise
+    finally:
+        __job_sleep()
 
 @pixiv_worker.task(name="download_artworks_by_tag", queue='pixivutil-queue')
-def download_artworks_by_tag(tag: str, bookmark_count: int):
-    logger.info(f"Downloading artwork by tag: {tag}. Bookmark minimum: {bookmark_count}")
-    # TODO: verify the tag is retrieved.
-    PixivServer.service.pixiv.service.download_artworks_by_tag(tag, bookmark_count)
-    __job_sleep()
-    return True
+def download_artworks_by_tag(request_dict: dict):
+    try:
+        request = DownloadArtworksByTagsRequest(**request_dict)
+        PixivServer.service.pixiv.PixivHelper.print_and_log("info", f"Downloading artwork by tag: {request.tags}. Bookmark minimum: {request.bookmark_count}")
+        PixivServer.service.pixiv.service.download_artworks_by_tag(request)
+        return True
+    except Exception as e:
+        logger.error(f"Error in download_artworks_by_tag worker: {str(e)}")
+        logger.error(traceback.format_exc())
+        raise
+    finally:
+        __job_sleep()
