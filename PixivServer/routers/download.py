@@ -8,6 +8,7 @@ import urllib.parse
 from PixivServer.service.pixiv import service
 from PixivServer.worker import download_artworks_by_id, download_artworks_by_member_id, download_artworks_by_tag
 from PixivServer.models.pixiv import DownloadArtworkByIdRequest, DownloadArtworksByMemberIdRequest, DownloadArtworksByTagsRequest
+from PixivServer.utils import is_valid_date
 
 logger = logging.getLogger('uvicorn.pixivutil')
 router = APIRouter()
@@ -55,7 +56,21 @@ async def queue_download_artworks_by_tag(
     """
     Download Pixiv images that have a given tag.
     The tag_name is automatically URL-decoded and can contain special characters.
+    Recommendation when calling this API is to set a limit on bookmark count and start date,
+    to avoid downloading too many images (e.g. bookmark_count = 100, start_date = 1 month ago).
+
+    start_date: Optional[str] format: YYYY-MM-DD
+    end_date: Optional[str] format: YYYY-MM-DD
     """
+    if start_date and not is_valid_date(start_date):
+        return JSONResponse({
+            "error": "Invalid start_date format. Expected format: YYYY-MM-DD"
+        }, status_code=400)
+    if end_date and not is_valid_date(end_date):
+        return JSONResponse({
+            "error": "Invalid end_date format. Expected format: YYYY-MM-DD"
+        }, status_code=400)
+
     decoded_tag = urllib.parse.unquote(tag_name)
     logger.info(f"Downloading Pixiv artworks that have the tag: {decoded_tag}")
     request = DownloadArtworksByTagsRequest(
