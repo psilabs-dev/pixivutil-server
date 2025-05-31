@@ -7,7 +7,6 @@ class DownloadArtworkByIdRequest(BaseModel):
 
 class DownloadArtworksByMemberIdRequest(BaseModel):
     member_id: int
-    include_sketch: bool = False
 
 class DownloadArtworksByTagsRequest(BaseModel):
     """
@@ -17,7 +16,7 @@ class DownloadArtworksByTagsRequest(BaseModel):
     wildcard: bool = False
     start_date: Optional[str] = None
     end_date: Optional[str] = None
-    bookmark_count: int = 0
+    bookmark_count: Optional[int] = None
     sort_order: Literal[
         'date_d', 'date', 'popular_d', 'popular_male_d', 'popular_female_d',
     ]
