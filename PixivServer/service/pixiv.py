@@ -7,6 +7,7 @@ import logging
 
 sys.path.append('PixivUtil2')
 
+from PixivServer.models.pixiv import DownloadArtworkByIdRequest, DownloadArtworksByMemberIdRequest, DownloadArtworksByTagsRequest
 from PixivUtil2 import (
     PixivConfig, 
     PixivBrowserFactory, 
@@ -171,32 +172,46 @@ class PixivUtilService:
             raise PixivException("Cannot get artwork name; response: " + str(response))
         return data.imageTitle
 
-    def download_artwork_by_id(self, artwork_id: int):
-        logger.info(f"Download by artwork ID: {artwork_id}")
+    def download_artwork_by_id(self, request: DownloadArtworkByIdRequest):
+        PixivHelper.print_and_log("info", f"Download by artwork ID: {request.artwork_id}")
         return PixivImageHandler.process_image(
             sys.modules[__name__],
             __config__,
-            image_id=artwork_id,
+            image_id=request.artwork_id,
             useblacklist=False,
             user_dir=self.downloads_folder
         )
 
-    def download_artworks_by_member_id(self, member_id: int):
-        logger.info(f"Downloading by artist ID: {member_id}")
+    def download_artworks_by_member_id(self, request: DownloadArtworksByMemberIdRequest):
+        PixivHelper.print_and_log("info", f"Downloading by artist ID: {request.member_id}")
         PixivArtistHandler.process_member(
             sys.modules[__name__],
             __config__,
-            member_id=member_id,
+            member_id=request.member_id,
             user_dir=self.downloads_folder,
+            include_sketch=request.include_sketch,
         )
 
-    def download_artworks_by_tag(self, tag: str, bookmark_count: int):
-        logger.info(f"Downloading by tag: {tag}")
-        PixivTagsHandler.process_tags(
-            sys.modules[__name__],
-            __config__,
-            tag.rstrip(),
-            bookmark_count=bookmark_count
-        )
+    def download_artworks_by_tag(self, request: DownloadArtworksByTagsRequest):
+        logger.info(f"Before calling PixivTagsHandler.process_tags with tag: {request.tags}")
+        try:
+            logger.info(f"Parameters: wild_card={request.wildcard}, bookmark_count={request.bookmark_count}, sort_order={request.sort_order}")
+            PixivHelper.print_and_log("info", f"Downloading by tag: {request.tags}")
+            PixivTagsHandler.process_tags(
+                sys.modules[__name__],
+                __config__,
+                request.tags.rstrip(),
+                bookmark_count=request.bookmark_count,
+                start_date=request.start_date,
+                end_date=request.end_date,
+                sort_order=request.sort_order,
+                type_mode=request.type_mode,
+                wild_card=request.wildcard,
+            )
+            logger.info(f"Successfully completed process_tags for tag: {request.tags}")
+        except Exception as e:
+            logger.error(f"Error in download_artworks_by_tag: {str(e)}")
+            logger.error(traceback.format_exc())
+            raise
 
 service = PixivUtilService()

@@ -1,4 +1,5 @@
 import logging
+from typing import Optional
 from fastapi import APIRouter, Response
 from fastapi.encoders import jsonable_encoder
 import json
@@ -10,7 +11,7 @@ logger = logging.getLogger('uvicorn.pixivutil')
 router = APIRouter()
 
 @router.get("/member/{member_id}")
-async def download_member_info_by_id(member_id: str):
+async def download_member_info_by_id(member_id: Optional[str]):
     logger.info(f"Retrieving member info by ID: {member_id}.")
     if member_id is None:
         return Response(
@@ -38,7 +39,7 @@ async def download_member_info_by_id(member_id: str):
         )
 
 @router.get("/artwork/{artwork_id}")
-async def download_artwork_info_by_id(artwork_id: str):
+async def download_artwork_info_by_id(artwork_id: Optional[str]):
     logger.info(f"Retrieving artwork info by ID: {artwork_id}.")
     if artwork_id is None:
         return Response(
