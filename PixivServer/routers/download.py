@@ -29,12 +29,12 @@ async def queue_download_artwork_by_id(artwork_id: str) -> Response:
     })
 
 @router.post("/member/{member_id}")
-async def queue_download_artworks_by_member_id(member_id: str, include_sketch: bool = False) -> Response:
+async def queue_download_artworks_by_member_id(member_id: str) -> Response:
     """
     Download Pixiv image by member ID.
     """
     logger.info(f"Downloading Pixiv artworks by member ID: {member_id}.")
-    request = DownloadArtworksByMemberIdRequest(member_id=int(member_id), include_sketch=include_sketch)
+    request = DownloadArtworksByMemberIdRequest(member_id=int(member_id))
     member_name = service.get_member_name(request.member_id)
     task: AsyncResult = download_artworks_by_member_id.delay(request.model_dump())
     return JSONResponse({
@@ -46,7 +46,7 @@ async def queue_download_artworks_by_member_id(member_id: str, include_sketch: b
 @router.post("/tag/{tag_name}")
 async def queue_download_artworks_by_tag(
     tag_name: str, 
-    bookmark_count: int = 0, 
+    bookmark_count: Optional[int] = None, 
     sort_order: Literal['date_d', 'date', 'popular_d', 'popular_male_d', 'popular_female_d'] = 'date_d', 
     type_mode: Literal['a', 'i', 'm'] = 'a',
     wildcard: bool = False,

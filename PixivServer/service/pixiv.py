@@ -188,8 +188,6 @@ class PixivUtilService:
             sys.modules[__name__],
             __config__,
             member_id=request.member_id,
-            user_dir=self.downloads_folder,
-            include_sketch=request.include_sketch,
         )
 
     def download_artworks_by_tag(self, request: DownloadArtworksByTagsRequest):
