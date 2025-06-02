@@ -1,3 +1,5 @@
+from datetime import timedelta
+import datetime
 from typing import Literal, Optional
 from celery.result import AsyncResult
 import logging
@@ -52,6 +54,7 @@ async def queue_download_artworks_by_tag(
     wildcard: bool = False,
     start_date: Optional[str] = None,
     end_date: Optional[str] = None,
+    lookback_days: Optional[int] = None,
 ) -> Response:
     """
     Download Pixiv images that have a given tag.
@@ -61,6 +64,9 @@ async def queue_download_artworks_by_tag(
 
     start_date: Optional[str] format: YYYY-MM-DD
     end_date: Optional[str] format: YYYY-MM-DD
+    lookback_days: Optional[int]: get all artworks between now and lookback_days ago
+
+    If both start_date and lookback_days are provided, the start_date will be ignored.
     """
     if start_date and not is_valid_date(start_date):
         return JSONResponse({
@@ -70,6 +76,9 @@ async def queue_download_artworks_by_tag(
         return JSONResponse({
             "error": "Invalid end_date format. Expected format: YYYY-MM-DD"
         }, status_code=400)
+
+    if lookback_days:
+        start_date = (datetime.datetime.now() - timedelta(days=lookback_days)).strftime('%Y-%m-%d')
 
     decoded_tag = urllib.parse.unquote(tag_name)
     logger.info(f"Downloading Pixiv artworks that have the tag: {decoded_tag}")
