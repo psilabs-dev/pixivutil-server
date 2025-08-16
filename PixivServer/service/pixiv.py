@@ -4,10 +4,11 @@ import sys
 import traceback
 
 import logging
+from typing import Optional
 
 sys.path.append('PixivUtil2')
 
-from PixivServer.models.pixiv import DownloadArtworkByIdRequest, DownloadArtworksByMemberIdRequest, DownloadArtworksByTagsRequest
+from PixivServer.models.pixiv import DeleteArtworkByIdRequest, DownloadArtworkByIdRequest, DownloadArtworksByMemberIdRequest, DownloadArtworksByTagsRequest
 from PixivUtil2 import (
     PixivConfig, 
     PixivBrowserFactory, 
@@ -211,5 +212,62 @@ class PixivUtilService:
             logger.error(f"Error in download_artworks_by_tag: {str(e)}")
             logger.error(traceback.format_exc())
             raise
+
+    def delete_artwork_by_id(self, request: DeleteArtworkByIdRequest):
+        """
+        Delete artwork by ID. Operates directly on the database and filesystem.
+        """
+        PixivHelper.print_and_log("info", f"Deleting artwork by ID: {request.artwork_id}")
+        db_path: str = __config__.dbPath
+        if not os.path.exists(db_path):
+            raise FileNotFoundError(f"Database file not found: {db_path}")
+        conn = sqlite3.connect(db_path)
+        try:
+            cursor = conn.cursor()
+            # get the images/archive first.
+            master_image_row = cursor.execute("SELECT save_name FROM pixiv_master_image WHERE image_id = ?", (request.artwork_id,)).fetchone()
+            manga_image_rows = cursor.execute("SELECT save_name FROM pixiv_manga_image WHERE image_id = ?", (request.artwork_id,)).fetchall()
+            if master_image_row is None:
+                PixivHelper.print_and_log("error", f"Artwork with ID {request.artwork_id} not found in database.")
+                return
+            master_image_save_name: Optional[str] = master_image_row[0]
+            if master_image_save_name is None:
+                PixivHelper.print_and_log("error", f"Artwork with ID {request.artwork_id} has no save name.")
+                pass
+            if not os.path.exists(master_image_save_name):
+                PixivHelper.print_and_log("error", f"Artwork with ID {request.artwork_id} has no save name {master_image_save_name}.")
+                pass
+            try:
+                # try to delete image, which may throw error if permission is denied.
+                os.remove(master_image_save_name)
+            except OSError as os_error:
+                PixivHelper.print_and_log("error", f"Error deleting artwork {master_image_save_name}: {str(os_error)}")
+                raise
+            for manga_image_row in manga_image_rows:
+                manga_image_save_name: Optional[str] = manga_image_row[0]
+                if manga_image_save_name is None:
+                    PixivHelper.print_and_log("error", f"Artwork with ID {request.artwork_id} has no save name.")
+                    pass
+                if manga_image_save_name == master_image_save_name:
+                    continue
+                if not os.path.exists(manga_image_save_name):
+                    PixivHelper.print_and_log("error", f"Artwork with ID {request.artwork_id} has no save name {manga_image_save_name}.")
+                    pass
+                try:
+                    os.remove(manga_image_save_name)
+                except OSError as os_error:
+                    PixivHelper.print_and_log("error", f"Error deleting artwork {manga_image_save_name}: {str(os_error)}")
+                    raise
+            cursor.execute("DELETE FROM pixiv_master_image WHERE image_id = ?", (request.artwork_id,))
+            cursor.execute("DELETE FROM pixiv_manga_image WHERE image_id = ?", (request.artwork_id,))
+            cursor.execute("DELETE FROM pixiv_image_to_tag WHERE image_id = ?", (request.artwork_id,))
+            conn.commit()
+            PixivHelper.print_and_log("info", f"Successfully deleted artwork by ID: {request.artwork_id}")
+        except Exception as e:
+            PixivHelper.print_and_log("error", f"Error in delete_artwork_by_id: {str(e)}")
+            PixivHelper.print_and_log("error", traceback.format_exc())
+            raise
+        finally:
+            conn.close()
 
 service = PixivUtilService()
