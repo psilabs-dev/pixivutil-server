@@ -9,6 +9,7 @@ import PixivServer
 import PixivServer.routers
 import PixivServer.routers.download
 import PixivServer.routers.health
+import PixivServer.routers.lanraragi
 import PixivServer.routers.metadata
 import PixivServer.routers.server
 # import PixivServer.routers.subscription
@@ -53,6 +54,10 @@ app.include_router(
 app.include_router(
     PixivServer.routers.server.router,
     prefix="/api/server"
+)
+app.include_router(
+    PixivServer.routers.lanraragi.router,
+    prefix="/api/lanraragi"
 )
 # app.include_router(
 #     PixivServer.routers.subscription.router,
