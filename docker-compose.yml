@@ -20,11 +20,11 @@ services:
       - rabbitmq-data:/var/lib/rabbitmq:rw
     ports:
       - 127.0.0.1:15672:15672
+    env_file:
+      - .env
 
   pixivutil-worker:
-    build:
-      context: .
-      dockerfile: ./docker/PixivServer.Dockerfile
+    build: .
     container_name: pixivutil-worker
     command: ["celery", "-A", "PixivServer.worker.pixiv_worker", "worker", "--concurrency=1", "--loglevel=info", "-B"]
     environment:
@@ -38,9 +38,7 @@ services:
         condition: service_healthy
 
   pixivutil-server:
-    build:
-      context: .
-      dockerfile: ./docker/PixivServer.Dockerfile
+    build: .
     container_name: pixivutil-server
     command: ["uvicorn", "PixivServer.app:app", "--host", "0.0.0.0", "--port", "8000", "--log-level", "info"]
     environment:
@@ -54,3 +52,6 @@ services:
     depends_on:
       rabbitmq:
         condition: service_healthy
+    env_file:
+      - .env
+    
