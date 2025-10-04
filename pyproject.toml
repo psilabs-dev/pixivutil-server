@@ -6,7 +6,7 @@ build-backend = "setuptools.build_meta"
 name = "pixivutil-server"
 description = "Web server for PixivUtil2"
 readme = "README.md"
-requires-python = ">=3.8"
+requires-python = ">=3.12"
 license = { file = "LICENSE" }
 authors = [
   { name = "psilabs-dev" }
