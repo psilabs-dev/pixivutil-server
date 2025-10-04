@@ -1,5 +1,6 @@
 from contextlib import asynccontextmanager
 import traceback
+from PixivServer.utils import get_version
 from fastapi import FastAPI, Response
 import logging
 import time
@@ -60,9 +61,4 @@ app.include_router(
 
 @app.get("/")
 async def info():
-    with open("VERSION", "r") as reader:
-        version = reader.read().strip()
-    return Response(
-        content=f"PixivUtil Server {version}",
-        status_code=200
-    )
+    return Response(content=f"PixivUtil Server {get_version()}", status_code=200)
