@@ -1,0 +1,46 @@
+[build-system]
+requires = ["setuptools", "setuptools_scm"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "pixivutil-server"
+description = "Web server for PixivUtil2"
+readme = "README.md"
+requires-python = ">=3.12"
+license = { file = "LICENSE" }
+authors = [
+  { name = "psilabs-dev" }
+]
+version = "2.1.0"
+dependencies = [
+  "aiofiles",
+  "fastapi",
+  "uvicorn",
+  "celery",
+  "sqlalchemy",
+  # Dependencies used by bundled PixivUtil2 module
+  "beautifulsoup4>=4.9.3",
+  "certifi>=2021.5.30",
+  "demjson3>=3.0.0",
+  "mechanize>=0.4.5",
+  "Pillow>=8.3.0",
+  "PySocks>=1.7.1",
+  "colorama>=0.4.4",
+  "cloudscraper>=1.2.58",
+]
+
+[tool.setuptools]
+include-package-data = true
+
+[tool.setuptools.packages.find]
+include = [
+  "PixivServer*"
+]
+exclude = [
+  "PixivUtil2*",
+  "tests*",
+  "test*",
+  "docs*"
+]
+
+

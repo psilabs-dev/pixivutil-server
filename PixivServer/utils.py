@@ -1,3 +1,4 @@
+import importlib.metadata
 import logging
 import os
 import shutil
@@ -5,6 +6,9 @@ import traceback
 from datetime import datetime
 
 logger = logging.getLogger(__name__)
+
+def get_version() -> str:
+    return importlib.metadata.version("pixivutil-server")
 
 def clear_folder(folder: str) -> bool:
 
