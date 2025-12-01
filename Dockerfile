@@ -1,4 +1,7 @@
-FROM condaforge/miniforge3
+FROM python:3.12-slim
+
+LABEL org.opencontainers.image.authors="psilabs-dev <https://github.com/psilabs-dev>"
+LABEL org.opencontainers.image.source="https://github.com/psilabs-dev/pixivutil-server"
 
 ENV DEBIAN_FRONTEND=noninteractive
 
