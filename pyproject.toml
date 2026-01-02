@@ -11,7 +11,7 @@ license = { file = "LICENSE" }
 authors = [
   { name = "psilabs-dev" }
 ]
-version = "2.1.0"
+version = "2.2.0"
 dependencies = [
   "aiofiles",
   "fastapi",
@@ -27,6 +27,7 @@ dependencies = [
   "PySocks>=1.7.1",
   "colorama>=0.4.4",
   "cloudscraper>=1.2.58",
+  "curl_cffi>=0.11.3"
 ]
 
 [tool.setuptools]
