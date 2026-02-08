@@ -47,7 +47,7 @@ class PixivUtilRepository:
             row = c.fetchone()
             title = row[0]
         except Exception:
-            logger.error(f'Failed to select image ID by title')
+            logger.error('Failed to select image ID by title')
             raise
         finally:
             c.close()

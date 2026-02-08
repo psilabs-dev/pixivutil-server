@@ -53,14 +53,14 @@ async def download_artwork_info_by_id(artwork_id: Optional[str]):
         )
     artwork_id = int(artwork_id)
     try:
-        image_data, response = pixiv.service.get_artwork_data(artwork_id)
+        image_data, _ = pixiv.service.get_artwork_data(artwork_id)
         image_json = json.dumps(jsonable_encoder(image_data))
 
         return Response(
             content=image_json,
             status_code=200
         )
-    except Exception as e:
+    except Exception:
         logger.error("An unexpected error occurred: ", traceback.format_exc())
         return Response(
             content="An unexpected error occurred." + traceback.format_exc(),

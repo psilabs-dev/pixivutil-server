@@ -28,8 +28,8 @@ class SubscriptionService:
         logger.info("Triggering automated tag download job...")
         subscribed_tags = self.get_subscribed_tags()
 
-        num_new_artworks = 0
-        new_artwork_titles_by_tag_id = dict()
+        # num_new_artworks = 0
+        # new_artwork_titles_by_tag_id = dict()
 
         for tag in subscribed_tags:
             tag_id = tag[0]
