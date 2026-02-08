@@ -12,7 +12,9 @@ from PixivServer.models.pixiv_metadata import (
     PixivTagTranslation,
     PixivImageToTag,
     PixivMasterSeries,
-    PixivImageToSeries
+    PixivImageToSeries,
+    PixivTagInfo,
+    PixivSeriesInfo
 )
 
 logger = logging.getLogger(__name__)
@@ -169,6 +171,140 @@ class PixivUtilRepository:
             return [row[0] for row in rows]
         except Exception as e:
             logger.error(f"Error getting all series IDs: {e}")
+            raise
+        finally:
+            if cursor:
+                cursor.close()
+
+    def get_tag_info_by_id(self, tag_id: str) -> PixivTagInfo:
+        """
+        Get tag information including translations and associated images.
+
+        Raises:
+            KeyError: If tag with the given ID is not found.
+        """
+        try:
+            cursor = self.connection.cursor()
+
+            # Get tag data
+            cursor.execute(
+                """SELECT tag_id, created_date, last_update_date
+                   FROM pixiv_master_tag
+                   WHERE tag_id = ?""",
+                (tag_id,)
+            )
+            tag_row = cursor.fetchone()
+
+            if tag_row is None:
+                raise KeyError(f"Tag with ID {tag_id} not found")
+
+            tag = PixivMasterTag(
+                tag_id=tag_row[0],
+                created_date=tag_row[1],
+                last_update_date=tag_row[2]
+            )
+
+            # Get tag translations
+            cursor.execute(
+                """SELECT tag_id, translation_type, translation, created_date, last_update_date
+                   FROM pixiv_tag_translation
+                   WHERE tag_id = ?""",
+                (tag_id,)
+            )
+            translation_rows = cursor.fetchall()
+            translations = [
+                PixivTagTranslation(
+                    tag_id=row[0],
+                    translation_type=row[1],
+                    translation=row[2],
+                    created_date=row[3],
+                    last_update_date=row[4]
+                )
+                for row in translation_rows
+            ]
+
+            # Get images with this tag
+            cursor.execute(
+                """SELECT image_id, tag_id, created_date, last_update_date
+                   FROM pixiv_image_to_tag
+                   WHERE tag_id = ?
+                   ORDER BY image_id ASC""",
+                (tag_id,)
+            )
+            image_rows = cursor.fetchall()
+            images = [
+                PixivImageToTag(
+                    image_id=row[0],
+                    tag_id=row[1],
+                    created_date=row[2],
+                    last_update_date=row[3]
+                )
+                for row in image_rows
+            ]
+
+            return PixivTagInfo(tag=tag, translations=translations, images=images)
+        except Exception as e:
+            logger.error(f"Error getting tag info for {tag_id}: {e}")
+            raise
+        finally:
+            if cursor:
+                cursor.close()
+
+    def get_series_info_by_id(self, series_id: str) -> PixivSeriesInfo:
+        """
+        Get series information and associated images.
+
+        Raises:
+            KeyError: If series with the given ID is not found.
+        """
+        try:
+            cursor = self.connection.cursor()
+
+            # Get series data
+            cursor.execute(
+                """SELECT series_id, series_title, series_type, series_description,
+                          created_date, last_update_date
+                   FROM pixiv_master_series
+                   WHERE series_id = ?""",
+                (series_id,)
+            )
+            series_row = cursor.fetchone()
+
+            if series_row is None:
+                raise KeyError(f"Series with ID {series_id} not found")
+
+            series = PixivMasterSeries(
+                series_id=series_row[0],
+                series_title=series_row[1],
+                series_type=series_row[2],
+                series_description=series_row[3],
+                created_date=series_row[4],
+                last_update_date=series_row[5]
+            )
+
+            # Get images in this series
+            cursor.execute(
+                """SELECT series_id, series_order, image_id, created_date, last_update_date
+                   FROM pixiv_image_to_series
+                   WHERE series_id = ?
+                   ORDER BY series_order ASC""",
+                (series_id,)
+            )
+            image_rows = cursor.fetchall()
+            images = [
+                PixivImageToSeries(
+                    series_id=row[0],
+                    series_order=row[1],
+                    image_id=row[2],
+                    created_date=row[3],
+                    last_update_date=row[4]
+                )
+                for row in image_rows
+            ]
+
+            return PixivSeriesInfo(series=series, images=images)
+        except Exception as e:
+            logger.error(f"Error getting series info for {series_id}: {e}")
             raise
         finally:
             if cursor:

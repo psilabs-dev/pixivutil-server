@@ -109,3 +109,18 @@ class PixivImageComplete(BaseModel):
     pages: list[PixivMangaImage]
     series: Optional[tuple[PixivImageToSeries, PixivMasterSeries]] = Field(None, description="Optional series info from an artwork, if available.")
     tags: list[tuple[PixivImageToTag, PixivMasterTag, Optional[PixivTagTranslation]]]
+
+class PixivTagInfo(BaseModel):
+    """
+    Tag info and images with tag
+    """
+    tag: PixivMasterTag
+    translations: list[PixivTagTranslation]
+    images: list[PixivImageToTag]
+
+class PixivSeriesInfo(BaseModel):
+    """
+    Series info and images with series
+    """
+    series: PixivMasterSeries
+    images: list[PixivImageToSeries]

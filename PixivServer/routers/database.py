@@ -134,6 +134,80 @@ def get_all_pixiv_series() -> Response:
     finally:
         repository.close()
 
+@router.get("/tag/{tag_id}")
+def get_pixiv_tag_info_by_id(tag_id: str) -> Response:
+    """Get tag information from the database."""
+    logger.info(f"Getting tag info by ID from database: {tag_id}.")
+
+    repository = PixivUtilRepository()
+
+    try:
+        repository.open()
+        tag_info = repository.get_tag_info_by_id(tag_id)
+
+        tag_info_json = json.dumps(jsonable_encoder(tag_info))
+        return Response(
+            content=tag_info_json,
+            status_code=200,
+        )
+    except KeyError as e:
+        logger.info(f"Tag not found: {e}")
+        return Response(
+            content=f"Tag with ID {tag_id} not found.",
+            status_code=404,
+        )
+    except sqlite3.Error as e:
+        logger.error(f"Database error while getting tag {tag_id}: {e}")
+        return Response(
+            content="Database error occurred.",
+            status_code=500,
+        )
+    except Exception as e:
+        logger.error(f"Unexpected error while getting tag {tag_id}: {e}")
+        return Response(
+            content="An unexpected error occurred.",
+            status_code=500,
+        )
+    finally:
+        repository.close()
+
+@router.get("/series/{series_id}")
+def get_pixiv_series_info_by_id(series_id: str) -> Response:
+    """Get series information from the database."""
+    logger.info(f"Getting series info by ID from database: {series_id}.")
+
+    repository = PixivUtilRepository()
+
+    try:
+        repository.open()
+        series_info = repository.get_series_info_by_id(series_id)
+
+        series_info_json = json.dumps(jsonable_encoder(series_info))
+        return Response(
+            content=series_info_json,
+            status_code=200,
+        )
+    except KeyError as e:
+        logger.info(f"Series not found: {e}")
+        return Response(
+            content=f"Series with ID {series_id} not found.",
+            status_code=404,
+        )
+    except sqlite3.Error as e:
+        logger.error(f"Database error while getting series {series_id}: {e}")
+        return Response(
+            content="Database error occurred.",
+            status_code=500,
+        )
+    except Exception as e:
+        logger.error(f"Unexpected error while getting series {series_id}: {e}")
+        return Response(
+            content="An unexpected error occurred.",
+            status_code=500,
+        )
+    finally:
+        repository.close()
+
 @router.get("/member/{member_id}")
 def get_pixiv_member_portfolio_by_id(member_id: Optional[str]) -> Response:
     """Get member portfolio data from the database."""
