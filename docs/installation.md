@@ -2,7 +2,7 @@
 
 Before installing, prepare the `PixivUtil2` git submodule.
 ```sh
-git submodule init && git submodule update
+git submodule update --init --recursive
 ```
 This will clone the `PixivUtil2` repository.
 
