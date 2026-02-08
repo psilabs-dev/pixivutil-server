@@ -13,6 +13,7 @@ Build and run with Docker compose. A pixiv cookie is required at `PIXIVUTIL_COOK
 ```sh
 docker compose up --build
 ```
+This project uses `uv` inside the Docker image to install and run the app.
 Make a request to download an artwork:
 ```sh
 curl -X POST http://localhost:8000/api/download/artwork/{artwork-id-here}

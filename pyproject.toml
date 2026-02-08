@@ -1,6 +1,6 @@
 [build-system]
-requires = ["setuptools", "setuptools_scm"]
-build-backend = "setuptools.build_meta"
+requires = ["uv_build>=0.9.25,<0.10.0"]
+build-backend = "uv_build"
 
 [project]
 name = "pixivutil-server"
@@ -11,7 +11,7 @@ license = { file = "LICENSE" }
 authors = [
   { name = "psilabs-dev" }
 ]
-version = "2.2.1"
+version = "2.3.0"
 dependencies = [
   "aiofiles",
   "fastapi",
@@ -44,4 +44,6 @@ exclude = [
   "docs*"
 ]
 
-
+[tool.uv.build-backend]
+module-name = "PixivServer"
+module-root = ""

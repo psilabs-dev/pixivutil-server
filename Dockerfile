@@ -1,9 +1,10 @@
-FROM python:3.12-slim
+FROM astral/uv:python3.14-bookworm-slim
 
 LABEL org.opencontainers.image.authors="psilabs-dev <https://github.com/psilabs-dev>"
 LABEL org.opencontainers.image.source="https://github.com/psilabs-dev/pixivutil-server"
 
 ENV DEBIAN_FRONTEND=noninteractive
+ENV UV_NO_DEV=1
 
 # Install system dependencies
 RUN apt-get update && apt-get install -y ffmpeg sqlite3 && \
@@ -11,7 +12,14 @@ RUN apt-get update && apt-get install -y ffmpeg sqlite3 && \
 
 WORKDIR /workdir
 
-# Copy entire repo and install via pyproject
-COPY . .
-RUN pip install --no-cache-dir --upgrade pip && \
-    pip install --no-cache-dir .
+# Install dependencies
+COPY pyproject.toml /workdir/
+COPY uv.lock /workdir/
+COPY README.md /workdir/
+RUN uv sync --locked --no-install-project
+
+# Copy project files and install the project
+COPY . /workdir
+RUN uv sync --locked
+
+ENTRYPOINT ["uv", "run"]
