@@ -72,6 +72,68 @@ def get_all_pixiv_image_ids() -> Response:
     finally:
         repository.close()
 
+@router.get("/tags")
+def get_all_pixiv_tags() -> Response:
+    """Get all tag IDs from the database."""
+    logger.info("Getting all tag IDs from database.")
+
+    repository = PixivUtilRepository()
+
+    try:
+        repository.open()
+        tag_ids = repository.get_all_pixiv_tags()
+
+        tag_ids_json = json.dumps(tag_ids)
+        return Response(
+            content=tag_ids_json,
+            status_code=200,
+        )
+    except sqlite3.Error as e:
+        logger.error(f"Database error while getting all tag IDs: {e}")
+        return Response(
+            content="Database error occurred.",
+            status_code=500,
+        )
+    except Exception as e:
+        logger.error(f"Unexpected error while getting all tag IDs: {e}")
+        return Response(
+            content="An unexpected error occurred.",
+            status_code=500,
+        )
+    finally:
+        repository.close()
+
+@router.get("/series")
+def get_all_pixiv_series() -> Response:
+    """Get all series IDs from the database."""
+    logger.info("Getting all series IDs from database.")
+
+    repository = PixivUtilRepository()
+
+    try:
+        repository.open()
+        series_ids = repository.get_all_pixiv_series()
+
+        series_ids_json = json.dumps(series_ids)
+        return Response(
+            content=series_ids_json,
+            status_code=200,
+        )
+    except sqlite3.Error as e:
+        logger.error(f"Database error while getting all series IDs: {e}")
+        return Response(
+            content="Database error occurred.",
+            status_code=500,
+        )
+    except Exception as e:
+        logger.error(f"Unexpected error while getting all series IDs: {e}")
+        return Response(
+            content="An unexpected error occurred.",
+            status_code=500,
+        )
+    finally:
+        repository.close()
+
 @router.get("/member/{member_id}")
 def get_pixiv_member_portfolio_by_id(member_id: Optional[str]) -> Response:
     """Get member portfolio data from the database."""

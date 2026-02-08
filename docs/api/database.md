@@ -8,6 +8,14 @@ Get all member IDs from the PixivUtil2 database.
 
 Get all image IDs from the PixivUtil2 database.
 
+`GET /api/database/tags`
+
+Get all tag IDs from the PixivUtil2 database.
+
+`GET /api/database/series`
+
+Get all series IDs from the PixivUtil2 database.
+
 `GET /api/database/member/{member_id}`
 
 Get member portfolio data from the PixivUtil2 database.

@@ -136,6 +136,44 @@ class PixivUtilRepository:
             if cursor:
                 cursor.close()
 
+    def get_all_pixiv_tags(self) -> list[str]:
+        """
+        Get all tag IDs from the database.
+
+        Returns:
+            List of tag IDs. Empty list if no tags found.
+        """
+        try:
+            cursor = self.connection.cursor()
+            cursor.execute("SELECT tag_id FROM pixiv_master_tag ORDER BY tag_id ASC")
+            rows = cursor.fetchall()
+            return [row[0] for row in rows]
+        except Exception as e:
+            logger.error(f"Error getting all tag IDs: {e}")
+            raise
+        finally:
+            if cursor:
+                cursor.close()
+
+    def get_all_pixiv_series(self) -> list[str]:
+        """
+        Get all series IDs from the database.
+
+        Returns:
+            List of series IDs. Empty list if no series found.
+        """
+        try:
+            cursor = self.connection.cursor()
+            cursor.execute("SELECT series_id FROM pixiv_master_series ORDER BY series_id ASC")
+            rows = cursor.fetchall()
+            return [row[0] for row in rows]
+        except Exception as e:
+            logger.error(f"Error getting all series IDs: {e}")
+            raise
+        finally:
+            if cursor:
+                cursor.close()
+
     def get_image_data_by_id(self, image_id: int) -> PixivImageComplete:
         """
         Get complete image data including member, pages, series, and tags.
