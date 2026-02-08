@@ -1,3 +1,7 @@
+"""
+Model layer for PixivUtil worker queue processing interface.
+"""
+
 from typing import Literal, Optional
 from pydantic import BaseModel
 

@@ -7,6 +7,7 @@ import time
 
 import PixivServer
 import PixivServer.routers
+import PixivServer.routers.database
 import PixivServer.routers.download
 import PixivServer.routers.health
 import PixivServer.routers.metadata
@@ -53,6 +54,10 @@ app.include_router(
 app.include_router(
     PixivServer.routers.server.router,
     prefix="/api/server"
+)
+app.include_router(
+    PixivServer.routers.database.router,
+    prefix="/api/database"
 )
 # app.include_router(
 #     PixivServer.routers.subscription.router,

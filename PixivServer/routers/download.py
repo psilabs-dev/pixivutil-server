@@ -9,7 +9,7 @@ import urllib.parse
 
 from PixivServer.service.pixiv import service
 from PixivServer.worker import download_artworks_by_id, download_artworks_by_member_id, download_artworks_by_tag
-from PixivServer.models.pixiv import DownloadArtworkByIdRequest, DownloadArtworksByMemberIdRequest, DownloadArtworksByTagsRequest
+from PixivServer.models.pixiv_worker import DownloadArtworkByIdRequest, DownloadArtworksByMemberIdRequest, DownloadArtworksByTagsRequest
 from PixivServer.utils import is_valid_date
 
 logger = logging.getLogger('uvicorn.pixivutil')

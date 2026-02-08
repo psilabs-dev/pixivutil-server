@@ -9,7 +9,7 @@ import PixivServer
 # from PixivServer.config.worker import config as worker_config
 import PixivServer.service
 import PixivServer.service.pixiv
-from PixivServer.models.pixiv import DownloadArtworkByIdRequest, DownloadArtworksByMemberIdRequest, DownloadArtworksByTagsRequest
+from PixivServer.models.pixiv_worker import DownloadArtworkByIdRequest, DownloadArtworksByMemberIdRequest, DownloadArtworksByTagsRequest
 
 logger = logging.getLogger(__name__)
 

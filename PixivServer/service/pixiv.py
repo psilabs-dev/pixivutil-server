@@ -7,7 +7,7 @@ import logging
 
 sys.path.append('PixivUtil2')
 
-from PixivServer.models.pixiv import DownloadArtworkByIdRequest, DownloadArtworksByMemberIdRequest, DownloadArtworksByTagsRequest
+from PixivServer.models.pixiv_worker import DownloadArtworkByIdRequest, DownloadArtworksByMemberIdRequest, DownloadArtworksByTagsRequest
 from PixivUtil2 import (
     PixivConfig, 
     PixivBrowserFactory, 

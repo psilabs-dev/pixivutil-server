@@ -1,7 +1,7 @@
 import pytest
 from pydantic import ValidationError
 
-from PixivServer.models.pixiv import (
+from PixivServer.models.pixiv_worker import (
     DownloadArtworkByIdRequest,
     DownloadArtworksByMemberIdRequest,
     DownloadArtworksByTagsRequest,
