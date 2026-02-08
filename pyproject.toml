@@ -42,20 +42,6 @@ exclude = [
   "PixivUtil2/*"
 ]
 
-[tool.setuptools]
-include-package-data = true
-
-[tool.setuptools.packages.find]
-include = [
-  "PixivServer*"
-]
-exclude = [
-  "PixivUtil2*",
-  "tests*",
-  "test*",
-  "docs*"
-]
-
 [tool.uv.build-backend]
 module-name = "PixivServer"
 module-root = ""
