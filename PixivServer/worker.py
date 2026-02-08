@@ -9,7 +9,7 @@ import PixivServer
 # from PixivServer.config.worker import config as worker_config
 import PixivServer.service
 import PixivServer.service.pixiv
-from PixivServer.models.pixiv_worker import DownloadArtworkByIdRequest, DownloadArtworksByMemberIdRequest, DownloadArtworksByTagsRequest
+from PixivServer.models.pixiv_worker import DeleteArtworkByIdRequest, DownloadArtworkByIdRequest, DownloadArtworksByMemberIdRequest, DownloadArtworksByTagsRequest
 
 logger = logging.getLogger(__name__)
 
@@ -98,6 +98,20 @@ def download_artworks_by_tag(request_dict: dict):
         return True
     except Exception as e:
         logger.error(f"Error in download_artworks_by_tag worker: {str(e)}")
+        logger.error(traceback.format_exc())
+        raise
+    finally:
+        __job_sleep()
+
+@pixiv_worker.task(name="delete_artwork_by_id", queue='pixivutil-queue')
+def delete_artwork_by_id(request_dict: dict):
+    try:
+        request = DeleteArtworkByIdRequest(**request_dict)
+        PixivServer.service.pixiv.PixivHelper.print_and_log("info", f"Deleting artwork by ID: {request.artwork_id}.")
+        PixivServer.service.pixiv.service.delete_artwork_by_id(request)
+        return True
+    except Exception as e:
+        logger.error(f"Error in delete_artwork_by_id worker: {str(e)}")
         logger.error(traceback.format_exc())
         raise
     finally:

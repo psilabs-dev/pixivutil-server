@@ -4,10 +4,11 @@ import sys
 import traceback
 
 import logging
+from typing import Optional
 
 sys.path.append('PixivUtil2')
 
-from PixivServer.models.pixiv_worker import DownloadArtworkByIdRequest, DownloadArtworksByMemberIdRequest, DownloadArtworksByTagsRequest
+from PixivServer.models.pixiv_worker import DeleteArtworkByIdRequest, DownloadArtworkByIdRequest, DownloadArtworksByMemberIdRequest, DownloadArtworksByTagsRequest
 from PixivUtil2 import (
     PixivConfig, 
     PixivBrowserFactory, 
@@ -211,5 +212,91 @@ class PixivUtilService:
             logger.error(f"Error in download_artworks_by_tag: {str(e)}")
             logger.error(traceback.format_exc())
             raise
+
+    def delete_artwork_by_id(self, request: DeleteArtworkByIdRequest):
+        """Delete artwork by ID from database and filesystem."""
+        PixivHelper.print_and_log("info", f"Deleting artwork by ID: {request.artwork_id} (delete_metadata={request.delete_metadata})")
+        db_path: str = __config__.dbPath
+        if not os.path.exists(db_path):
+            raise FileNotFoundError(f"Database file not found: {db_path}")
+
+        conn = sqlite3.connect(db_path, timeout=30.0)
+        files_to_delete = []
+
+        try:
+            cursor = conn.cursor()
+
+            # Collect file paths
+            master_image_row = cursor.execute(
+                "SELECT save_name FROM pixiv_master_image WHERE image_id = ?",
+                (request.artwork_id,)
+            ).fetchone()
+
+            if master_image_row is None:
+                PixivHelper.print_and_log("warning", f"Artwork with ID {request.artwork_id} not found in database.")
+                return
+
+            master_image_save_name: Optional[str] = master_image_row[0]
+            is_archive_mode = master_image_save_name and master_image_save_name.endswith('.zip')
+
+            if master_image_save_name is not None:
+                files_to_delete.append(master_image_save_name)
+
+            # In archive mode, manga images are stored inside the zip file as basenames only
+            # In non-archive mode, manga images are individual files with full paths
+            if not is_archive_mode:
+                manga_image_rows = cursor.execute(
+                    "SELECT save_name FROM pixiv_manga_image WHERE image_id = ?",
+                    (request.artwork_id,)
+                ).fetchall()
+
+                for manga_image_row in manga_image_rows:
+                    manga_image_save_name: Optional[str] = manga_image_row[0]
+                    if manga_image_save_name is not None and manga_image_save_name != master_image_save_name:
+                        files_to_delete.append(manga_image_save_name)
+
+            # Delete from database
+            cursor.execute("DELETE FROM pixiv_master_image WHERE image_id = ?", (request.artwork_id,))
+            cursor.execute("DELETE FROM pixiv_manga_image WHERE image_id = ?", (request.artwork_id,))
+            cursor.execute("DELETE FROM pixiv_image_to_tag WHERE image_id = ?", (request.artwork_id,))
+
+            if request.delete_metadata:
+                cursor.execute("DELETE FROM pixiv_date_info WHERE image_id = ?", (request.artwork_id,))
+                cursor.execute("DELETE FROM pixiv_ai_info WHERE image_id = ?", (request.artwork_id,))
+                cursor.execute("DELETE FROM pixiv_image_to_series WHERE image_id = ?", (request.artwork_id,))
+                PixivHelper.print_and_log("info", f"Deleted artwork and metadata from database: {request.artwork_id}")
+            else:
+                PixivHelper.print_and_log("info", f"Deleted artwork from database (metadata preserved): {request.artwork_id}")
+
+            conn.commit()
+
+        except Exception as e:
+            conn.rollback()
+            PixivHelper.print_and_log("error", f"Database error in delete_artwork_by_id: {str(e)}")
+            PixivHelper.print_and_log("error", traceback.format_exc())
+            raise
+        finally:
+            conn.close()
+
+        # Delete files from filesystem
+        file_deletion_errors = []
+        for file_path in files_to_delete:
+            if not os.path.exists(file_path):
+                PixivHelper.print_and_log("warning", f"File not found: {file_path}")
+                continue
+
+            try:
+                os.remove(file_path)
+                PixivHelper.print_and_log("info", f"Deleted file: {file_path}")
+            except OSError as os_error:
+                error_msg = f"Error deleting file {file_path}: {str(os_error)}"
+                PixivHelper.print_and_log("error", error_msg)
+                file_deletion_errors.append(error_msg)
+
+        if file_deletion_errors:
+            PixivHelper.print_and_log("warning", f"Completed with {len(file_deletion_errors)} file deletion error(s)")
+        else:
+            mode = "archive" if is_archive_mode else "directory"
+            PixivHelper.print_and_log("info", f"Successfully deleted artwork ({mode} mode): {request.artwork_id}")
 
 service = PixivUtilService()

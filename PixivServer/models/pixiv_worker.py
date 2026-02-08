@@ -25,3 +25,7 @@ class DownloadArtworksByTagsRequest(BaseModel):
         'date_d', 'date', 'popular_d', 'popular_male_d', 'popular_female_d',
     ]
     type_mode: Literal['a', 'i', 'm'] = 'a'
+
+class DeleteArtworkByIdRequest(BaseModel):
+    artwork_id: int
+    delete_metadata: bool = True
