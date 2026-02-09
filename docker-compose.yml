@@ -26,6 +26,7 @@ services:
   pixivutil-worker:
     build: .
     container_name: pixivutil-worker
+    entrypoint: ["uv", "run"]
     command: ["celery", "-A", "PixivServer.worker.pixiv_worker", "worker", "--concurrency=1", "--loglevel=info", "-B"]
     environment:
       - PIXIVUTIL_COOKIE=$PIXIVUTIL_COOKIE
@@ -40,6 +41,7 @@ services:
   pixivutil-server:
     build: .
     container_name: pixivutil-server
+    entrypoint: ["uv", "run"]
     command: ["uvicorn", "PixivServer.app:app", "--host", "0.0.0.0", "--port", "8000", "--log-level", "info"]
     environment:
       - PIXIVUTIL_COOKIE=$PIXIVUTIL_COOKIE
@@ -54,4 +56,3 @@ services:
         condition: service_healthy
     env_file:
       - .env
-    

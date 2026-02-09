@@ -8,8 +8,8 @@ from fastapi.responses import JSONResponse
 import urllib.parse
 
 from PixivServer.service.pixiv import service
-from PixivServer.worker import download_artworks_by_id, download_artworks_by_member_id, download_artworks_by_tag
-from PixivServer.models.pixiv import DownloadArtworkByIdRequest, DownloadArtworksByMemberIdRequest, DownloadArtworksByTagsRequest
+from PixivServer.worker import delete_artwork_by_id, download_artworks_by_id, download_artworks_by_member_id, download_artworks_by_tag
+from PixivServer.models.pixiv_worker import DeleteArtworkByIdRequest, DownloadArtworkByIdRequest, DownloadArtworksByMemberIdRequest, DownloadArtworksByTagsRequest
 from PixivServer.utils import is_valid_date
 
 logger = logging.getLogger('uvicorn.pixivutil')
@@ -95,4 +95,25 @@ async def queue_download_artworks_by_tag(
     return JSONResponse({
         'task_id': task.id,
         'tag': decoded_tag,
+    })
+
+@router.delete("/artwork/{artwork_id}")
+async def queue_delete_artwork_by_id(artwork_id: str, delete_metadata: bool = True) -> Response:
+    """
+    Delete Pixiv image by ID from database and filesystem.
+
+    Args:
+        artwork_id: The Pixiv artwork ID to delete
+        delete_metadata: If True (default), also deletes metadata (date_info, ai_info, series).
+                        If False, only deletes artwork files and basic records.
+
+    This is a queue operation as it operates on a sqlite database.
+    """
+    logger.info(f"Deleting Pixiv artwork by image ID: {artwork_id} (delete_metadata={delete_metadata}).")
+    request = DeleteArtworkByIdRequest(artwork_id=int(artwork_id), delete_metadata=delete_metadata)
+    task: AsyncResult = delete_artwork_by_id.delay(request.model_dump())
+    return JSONResponse({
+        "task_id": task.id,
+        'artwork_id': artwork_id,
+        'delete_metadata': delete_metadata,
     })

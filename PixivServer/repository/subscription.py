@@ -76,7 +76,7 @@ class SubscriptionRepository:
             )
             results = c.fetchall()
         except Exception as e:
-            logger.error(f'Failed to export member subscriptions: ', e)
+            logger.error('Failed to export member subscriptions: ', e)
             raise e
         finally:
             c.close()
@@ -139,7 +139,7 @@ class SubscriptionRepository:
             )
             results = c.fetchall()
         except Exception as e:
-            logger.error(f"Failed to export tag encoded subscriptions: ", e)
+            logger.error("Failed to export tag encoded subscriptions: ", e)
             raise e
         finally:
             c.close()

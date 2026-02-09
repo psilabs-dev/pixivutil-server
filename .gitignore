@@ -1,4 +1,7 @@
+# PixivUtil2 data directory
 .pixivUtil2
+
+# environment variables for docker compose
 .env
 
 # Byte-compiled / optimized / DLL files
