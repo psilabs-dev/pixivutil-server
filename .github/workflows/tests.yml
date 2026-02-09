@@ -36,7 +36,7 @@ jobs:
 
       - name: Install dependencies
         run: |
-          uv sync --extra dev
+          uv sync --extra dev --extra pixivutil2
 
       - name: Run unit tests
         run: |
