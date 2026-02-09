@@ -16,10 +16,10 @@ WORKDIR /workdir
 COPY pyproject.toml /workdir/
 COPY uv.lock /workdir/
 COPY README.md /workdir/
-RUN uv sync --locked --no-install-project
+RUN uv sync --extra pixivutil2 --locked --no-install-project
 
 # Copy project files and install the project
 COPY . /workdir
-RUN uv sync --locked
+RUN uv sync --extra pixivutil2 --locked
 
 ENTRYPOINT ["uv", "run"]

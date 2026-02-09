@@ -69,9 +69,9 @@ To support durable messages with RabbitMQ, a timeout configuration is applied fo
 `uv` is the recommended Python project manager for development:
 
 ```sh
-uv sync --extra dev     # sync dev dependencies
-uv run pytest tests     # run tests
-uv run ruff check .     # run ruff lint check
+uv sync --extra dev --extra pixivutil2  # sync dev + PixivUtil2 dependencies
+uv run pytest tests                     # run tests
+uv run ruff check .                     # run ruff lint check
 ```
 
 The project also uses `uv` as the build runtime with `uv_build`, which significantly speeds up build times. On a raspberry pi, building the Dockerfile with `uv_build` takes ~5m, 3m less than with default `pip`.
