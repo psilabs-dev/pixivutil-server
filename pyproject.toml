@@ -24,14 +24,15 @@ dependencies = [
 # Dependencies used by bundled PixivUtil2 module
 pixivutil2 = [
   "beautifulsoup4>=4.9.3",
+  "browser-cookie3>=0.20.1",
   "certifi>=2021.5.30",
+  "cloudscraper>=1.2.58",
+  "colorama>=0.4.4",
+  "curl-cffi>=0.11.3",
   "demjson3>=3.0.0",
   "mechanize>=0.4.5",
-  "Pillow>=8.3.0",
-  "PySocks>=1.7.1",
-  "colorama>=0.4.4",
-  "cloudscraper>=1.2.58",
-  "curl_cffi>=0.11.3"
+  "pillow>=8.3.0",
+  "pysocks>=1.7.1",
 ]
 
 dev = [
