@@ -16,3 +16,6 @@ Queue download of series metadata by ID.
 
 Queue download of tag metadata by tag name. Optional query: `filter_mode` in
 `none`, `pixpedia`, `translation`, `pixpedia_or_translation`.
+
+> Breaking change: `/api/metadata/*` endpoints were removed. Use
+`/api/queue/metadata/*` instead.

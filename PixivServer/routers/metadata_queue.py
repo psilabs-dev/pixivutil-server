@@ -1,5 +1,6 @@
 import logging
-from typing import Literal, Optional
+import urllib.parse
+from typing import Literal
 
 from celery.result import AsyncResult
 from fastapi import APIRouter
@@ -76,16 +77,21 @@ async def queue_download_series_metadata_by_id(series_id: str) -> JSONResponse:
 @router.post("/tag/{tag}")
 async def queue_download_tag_metadata_by_id(
     tag: str,
-    filter_mode: Optional[
-        Literal["none", "pixpedia", "translation", "pixpedia_or_translation"]
+    filter_mode: Literal[
+        "none", "pixpedia", "translation", "pixpedia_or_translation"
     ] = "none",
 ) -> JSONResponse:
     """
     Queue download of tag metadata by tag ID/name.
     """
-    logger.info(f"Queueing tag metadata download: {tag} (filter_mode={filter_mode}).")
-    request = DownloadTagMetadataByIdRequest(tag=tag, filter_mode=filter_mode or "none")
+    decoded_tag = urllib.parse.unquote(tag)
+    logger.info(
+        f"Queueing tag metadata download: {decoded_tag} (filter_mode={filter_mode})."
+    )
+    request = DownloadTagMetadataByIdRequest(
+        tag=decoded_tag, filter_mode=filter_mode
+    )
     task: AsyncResult = download_tag_metadata_by_id.delay(request.model_dump())
     return JSONResponse(
-        {"task_id": task.id, "tag": tag, "filter_mode": request.filter_mode}
+        {"task_id": task.id, "tag": decoded_tag, "filter_mode": request.filter_mode}
     )
