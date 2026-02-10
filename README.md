@@ -90,6 +90,9 @@ For further configuration, apply them at `.pixivUtil2/conf/conf.ini` (refer to [
 
 Supported environment variable overrides. See `PixivServer/configuration/pixivutil.py`.
 
+Docker user mapping:
+- `PUID` and `PGID` set the UID/GID used by the server and worker containers (default `1000:1000`).
+
 ## Architecture and Development
 
 PixivUtil server is a Python project based on PixivUtil2 as its API client engine. PixivUtil2 is a separate git repository added to this as a submodule.

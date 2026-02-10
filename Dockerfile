@@ -7,7 +7,7 @@ ENV DEBIAN_FRONTEND=noninteractive
 ENV UV_NO_DEV=1
 
 # Install system dependencies
-RUN apt-get update && apt-get install -y ffmpeg sqlite3 && \
+RUN apt-get update && apt-get install -y ffmpeg sqlite3 gosu && \
     rm -rf /var/lib/apt/lists/*
 
 WORKDIR /workdir
@@ -23,4 +23,10 @@ RUN uv sync --extra pixivutil2 --locked --no-install-workspace
 COPY . /workdir
 RUN uv sync --extra pixivutil2 --locked
 
-ENTRYPOINT ["uv", "run"]
+# Create default user/group (UID/GID may be overridden at runtime)
+RUN groupadd -g 1000 app && useradd -m -u 1000 -g app -s /bin/sh app
+
+COPY docker/entrypoint.sh /entrypoint.sh
+RUN chmod +x /entrypoint.sh
+
+ENTRYPOINT ["/entrypoint.sh"]
