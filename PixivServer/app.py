@@ -10,7 +10,7 @@ import PixivServer.routers
 import PixivServer.routers.database
 import PixivServer.routers.download
 import PixivServer.routers.health
-import PixivServer.routers.metadata
+import PixivServer.routers.metadata_queue
 import PixivServer.routers.server
 # import PixivServer.routers.subscription
 import PixivServer.service
@@ -44,8 +44,8 @@ app.include_router(
     prefix="/api/health"
 )
 app.include_router(
-    PixivServer.routers.metadata.router,
-    prefix="/api/metadata"
+    PixivServer.routers.metadata_queue.router,
+    prefix="/api/queue/metadata"
 )
 app.include_router(
     PixivServer.routers.download.router,

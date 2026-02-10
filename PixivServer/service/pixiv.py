@@ -8,7 +8,16 @@ from typing import Optional
 
 sys.path.append('PixivUtil2')
 
-from PixivServer.models.pixiv_worker import DeleteArtworkByIdRequest, DownloadArtworkByIdRequest, DownloadArtworksByMemberIdRequest, DownloadArtworksByTagsRequest
+from PixivServer.models.pixiv_worker import (
+    DeleteArtworkByIdRequest,
+    DownloadArtworkByIdRequest,
+    DownloadArtworksByMemberIdRequest,
+    DownloadArtworksByTagsRequest,
+    DownloadArtworkMetadataByIdRequest,
+    DownloadMemberMetadataByIdRequest,
+    DownloadSeriesMetadataByIdRequest,
+    DownloadTagMetadataByIdRequest,
+)
 from PixivUtil2 import (
     PixivConfig, 
     PixivBrowserFactory, 
@@ -298,5 +307,41 @@ class PixivUtilService:
         else:
             mode = "archive" if is_archive_mode else "directory"
             PixivHelper.print_and_log("info", f"Successfully deleted artwork ({mode} mode): {request.artwork_id}")
+
+    def download_member_metadata_by_id(self, request: DownloadMemberMetadataByIdRequest):
+        PixivHelper.print_and_log("info", f"Download member metadata by ID: {request.member_id}")
+        PixivArtistHandler.process_member_metadata(
+            sys.modules[__name__],
+            __config__,
+            request.member_id,
+        )
+
+    def download_artwork_metadata_by_id(self, request: DownloadArtworkMetadataByIdRequest):
+        PixivHelper.print_and_log("info", f"Download artwork metadata by ID: {request.artwork_id}")
+        PixivImageHandler.process_image(
+            sys.modules[__name__],
+            __config__,
+            artist=None,
+            image_id=request.artwork_id,
+            useblacklist=False,
+            metadata_only=True,
+        )
+
+    def download_series_metadata_by_id(self, request: DownloadSeriesMetadataByIdRequest):
+        PixivHelper.print_and_log("info", f"Download series metadata by ID: {request.series_id}")
+        PixivImageHandler.process_manga_series_metadata(
+            sys.modules[__name__],
+            __config__,
+            request.series_id,
+        )
+
+    def download_tag_metadata_by_id(self, request: DownloadTagMetadataByIdRequest):
+        PixivHelper.print_and_log("info", f"Download tag metadata: {request.tag} (filter_mode={request.filter_mode})")
+        PixivTagsHandler.process_tag_metadata(
+            sys.modules[__name__],
+            __config__,
+            request.tag,
+            filter_mode=request.filter_mode,
+        )
 
 service = PixivUtilService()
