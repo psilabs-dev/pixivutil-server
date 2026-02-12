@@ -1,13 +1,16 @@
 # Download API
 
-`POST /api/download/artwork/{artwork_id}`
+`POST /api/queue/download/artwork/{artwork_id}`
 
-Send a request to download artwork by ID.
+Queue download of artwork by ID.
 
-`POST /api/download/member/{member_id}`
+`POST /api/queue/download/member/{member_id}`
 
-Send a request to download an artist's artworks by their artist/member ID.
+Queue download of a member's artworks by member ID.
 
-`POST /api/download/tag/{tag}`
+`POST /api/queue/download/tag/{tag}`
 
-Send a request to download all artworks with a given tag (tags should be URL encoded).
+Queue download of all artworks with a given tag (tags should be URL encoded).
+
+> Compatibility note: `/api/download/*` endpoints are still available but
+> deprecated. Use `/api/queue/download/*` as the canonical path.

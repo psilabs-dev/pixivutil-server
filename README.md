@@ -37,8 +37,10 @@ This project uses `uv` inside the Docker image to install and run the app.
 Make a request to download an artwork:
 
 ```sh
-curl -X POST http://localhost:8000/api/download/artwork/{artwork-id-here}
+curl -X POST http://localhost:8000/api/queue/download/artwork/{artwork-id-here}
 ```
+
+`/api/download/*` remains available as a deprecated compatibility alias.
 
 ### API Reference
 
