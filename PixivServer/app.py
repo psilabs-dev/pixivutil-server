@@ -24,7 +24,7 @@ async def lifespan(_: FastAPI):
         logger.info("Setting up server.")
         # startup actions
         time.sleep(5)
-        PixivServer.service.pixiv.service.open()
+        PixivServer.service.pixiv.service.open(validate_pixiv_login=False)
         # PixivServer.service.subscription_service.open()
     except Exception as e:
         print(f"Encountered exception during application setup: {traceback.format_exc()}")

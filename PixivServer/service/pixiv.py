@@ -95,7 +95,7 @@ class PixivUtilService:
 
         return
 
-    def open(self):
+    def open(self, validate_pixiv_login: bool = True):
 
         global __br__
         global __config__
@@ -116,11 +116,13 @@ class PixivUtilService:
         os.makedirs(os.path.dirname(__config__.dbPath), exist_ok=True)
         self.open_database()
         
-        # check if Pixiv cookie is installed / validate login capability.
-        cookie = __config__.cookie
         if __br__ is None:
             __br__ = PixivBrowserFactory.getBrowser(config=__config__)
-        self.login_pixiv(cookie)
+
+        # Worker may validate login at startup. API server should not.
+        if validate_pixiv_login:
+            cookie = __config__.cookie
+            self.login_pixiv(cookie)
         pass
 
     def close(self):
@@ -161,7 +163,6 @@ class PixivUtilService:
     def update_pixiv_cookie(self, new_cookie: str) -> bool:
         __config__.cookie = new_cookie
         __config__.writeConfig(path=configfile)
-        self.login_pixiv(new_cookie)
         return True
 
     def get_member_data(self, member_id: int):

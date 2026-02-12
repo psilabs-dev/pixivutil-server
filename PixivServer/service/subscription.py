@@ -84,16 +84,23 @@ class SubscriptionService:
         if not member_id.isdigit():
             raise TypeError(f'Member ID {member_id} cannot be converted to integer.')
         member_id = int(member_id)
+        member_name = ""
+
+        self.subscription_db.open()
+        self.pixivutil_db.open()
         try:
-            member_data = pixiv_service.get_member_data(member_id)[0]
-        except Exception as e:
-            logger.error(f"Failed to get member data for member: {member_id}: ", e)
-            raise e
-        member_name = member_data.artistName
-        if not member_name:
-            logger.warning(f'Member ID {member_id} was found with no member name, setting to empty string.')
-            member_name = ''
-        self.subscription_db.add_member_subscription(member_id, member_name)
+            try:
+                member_data = self.pixivutil_db.get_member_data_by_id(member_id)
+                member_name = member_data.member.name or member_name
+            except KeyError:
+                logger.info(
+                    f"Member metadata not found in SQLite for {member_id}; subscribing with empty name."
+                )
+            self.subscription_db.add_member_subscription(member_id, member_name)
+        finally:
+            self.pixivutil_db.close()
+            self.subscription_db.close()
+
         logger.info(f"Successfully added subscription for: {member_name}")
         return {
             'member_id': member_id,
