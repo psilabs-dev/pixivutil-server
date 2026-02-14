@@ -2,19 +2,6 @@
 
 PixivUtil server is a self-hosted, containerized server solution which provides [PixivUtil2](https://github.com/Nandaka/PixivUtil2) content download operations through an HTTP API interface.
 
-The following key operations are supported through PixivUtil server's API:
-
-- Download artworks by member ID
-- Download artwork by image ID
-- Download artworks by tag
-
-In addition, server API supports reading of metadata:
-
-- Get image metadata by ID
-- Get member metadata by ID
-- Get tag metadata by ID
-- Get series metadata by ID
-
 The scope of PixivUtil server covers only key Pixiv-related operations within a `uv` environment or Docker cluster. Non-Pixiv APIs, such as Fantia or Fanbox, are not supported, as they cannot be reliably tested.
 
 ## Installation
@@ -54,9 +41,44 @@ Authorization: Bearer <your-api-key>
 
 If `PIXIVUTIL_SERVER_API_KEY` is not set (or is empty), API key authentication is disabled.
 
+An nginx [configuration file](/nginx/default.conf) is attached for your reverse proxy reference.
+
 ### API Reference
 
-- [download](/docs/api/download.md)
+#### [Database](/docs/api/database.md)
+
+Endpoints to get metadata from the PixivUtil2 database.
+
+For example, the server supports the following endpoints:
+
+- Get image metadata by ID
+- Get member metadata by ID
+- Get tag metadata by ID
+- Get series metadata by ID
+
+#### [Download queueing](/docs/api/download.md)
+
+API endpoints to queue content (artwork) downloads for worker from server.
+
+The following jobs are supported via PixivUtil server API:
+
+- Download artworks by member ID
+- Download artwork by image ID
+- Download artworks by tag
+
+#### [Health](/docs/api/health.md)
+
+Health-related API endpoints, such as healthcheck for Docker containers.
+
+#### [Metadata queueing](/docs/api/metadata.md)
+
+API endpoints to queue metadata downloads for worker from server. Metadata includes artist, artwork, series, and tag.
+
+This is helpful when you have an artwork downloaded, but it's old/outdated and you want to re-fetch only the metadata.
+
+#### [Server](/docs/api/server.md)
+
+Server-related API endpoints, such as get cookie, update cookie, delete database, and delete downloads.
 
 ## Configuration
 
@@ -89,3 +111,7 @@ uv run ruff check .                     # run ruff lint check
 ```
 
 The project also uses `uv` as the build runtime with `uv_build`, which significantly speeds up build times. On a raspberry pi, building the Dockerfile with `uv_build` takes ~5m, 3m less than with default `pip`.
+
+## PixivUtil Client
+
+PixivUtil client is an asynchronous API client for PixivUtil server. See the client [README](/PixivUtilClient/README.md).
