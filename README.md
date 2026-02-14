@@ -108,7 +108,7 @@ To support durable messages with RabbitMQ, a timeout configuration is applied fo
 `uv` is the recommended Python project manager for development:
 
 ```sh
-uv sync --extra dev --extra pixivutil2  # sync dev + PixivUtil2 dependencies
+uv sync --extra pixivutil2              # sync dev + PixivUtil2 dependencies
 uv run pytest tests                     # run tests
 uv run ruff check .                     # run ruff lint check
 ```
