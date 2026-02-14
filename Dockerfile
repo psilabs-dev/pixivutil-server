@@ -1,3 +1,4 @@
+# syntax=docker/dockerfile:1.7
 FROM astral/uv:python3.14-bookworm-slim
 
 LABEL org.opencontainers.image.authors="psilabs-dev <https://github.com/psilabs-dev>"
@@ -9,24 +10,27 @@ ENV PYTHONUNBUFFERED=1
 ENV PYTHONDONTWRITEBYTECODE=1
 
 # Install system dependencies
-RUN apt-get update && apt-get install -y --no-install-recommends ffmpeg sqlite3 gosu && \
+RUN --mount=type=cache,target=/var/cache/apt,sharing=locked \
+    apt-get update && apt-get install -y --no-install-recommends ffmpeg sqlite3 gosu && \
     rm -rf /var/lib/apt/lists/*
 
 WORKDIR /workdir
 
 # Install dependencies
-COPY pyproject.toml                     /workdir/
-COPY uv.lock                            /workdir/
-COPY README.md                          /workdir/
-COPY PixivUtilClient/pyproject.toml     /workdir/PixivUtilClient/pyproject.toml
-RUN uv sync --extra pixivutil2 --locked --no-install-workspace --no-editable --compile-bytecode
+COPY --link pyproject.toml                      /workdir/
+COPY --link uv.lock                             /workdir/
+COPY --link README.md                           /workdir/
+COPY --link PixivUtilClient/pyproject.toml      /workdir/PixivUtilClient/pyproject.toml
+RUN --mount=type=cache,target=/root/.cache/uv \
+    uv sync --extra pixivutil2 --locked --no-install-workspace --no-editable --compile-bytecode
 
 # Copy project files and install the project
-COPY LICENSE                            /workdir/
-COPY PixivServer                        /workdir/PixivServer
-COPY PixivUtil2                         /workdir/PixivUtil2
-COPY PixivUtilClient                    /workdir/PixivUtilClient
-RUN uv sync --extra pixivutil2 --locked --no-editable --compile-bytecode && \
+COPY --link LICENSE                             /workdir/
+COPY --link PixivServer                         /workdir/PixivServer
+COPY --link PixivUtil2                          /workdir/PixivUtil2
+COPY --link PixivUtilClient                     /workdir/PixivUtilClient
+RUN --mount=type=cache,target=/root/.cache/uv \
+    uv sync --extra pixivutil2 --locked --no-editable --compile-bytecode && \
     rm -rf /workdir/PixivUtil2/test /workdir/PixivUtil2/test_data && \
     rm -rf /workdir/PixivUtilClient/tests
 
@@ -35,7 +39,7 @@ ENV PATH="/workdir/.venv/bin:$PATH"
 # Create default user/group (UID/GID may be overridden at runtime)
 RUN groupadd -g 1000 pixivuser && useradd -m -u 1000 -g pixivuser -s /bin/sh pixivuser
 
-COPY docker/entrypoint.sh /entrypoint.sh
+COPY --link docker/entrypoint.sh /entrypoint.sh
 RUN chmod +x /entrypoint.sh
 
 ENTRYPOINT ["/entrypoint.sh"]
