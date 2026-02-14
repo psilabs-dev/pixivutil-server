@@ -24,7 +24,9 @@ COPY LICENSE                            /workdir/
 COPY PixivServer                        /workdir/PixivServer
 COPY PixivUtil2                         /workdir/PixivUtil2
 COPY PixivUtilClient                    /workdir/PixivUtilClient
-RUN uv sync --extra pixivutil2 --locked
+RUN uv sync --extra pixivutil2 --locked && \
+    rm -rf /workdir/PixivUtil2/test /workdir/PixivUtil2/test_data && \
+    rm -rf /workdir/PixivUtilClient/tests
 
 # Create default user/group (UID/GID may be overridden at runtime)
 RUN groupadd -g 1000 pixivuser && useradd -m -u 1000 -g pixivuser -s /bin/sh pixivuser
