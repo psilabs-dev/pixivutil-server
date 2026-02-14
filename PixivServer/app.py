@@ -1,11 +1,12 @@
 from contextlib import asynccontextmanager
 import traceback
 from PixivServer.utils import get_version
-from fastapi import FastAPI, Response
+from fastapi import Depends, FastAPI, Response
 import logging
 import time
 
 import PixivServer
+import PixivServer.auth
 import PixivServer.routers
 import PixivServer.routers.database
 import PixivServer.routers.download_queue
@@ -39,30 +40,37 @@ app = FastAPI(
     lifespan=lifespan
 )
 
+auth_dependency = [Depends(PixivServer.auth.is_valid_api_key_header)]
+
 app.include_router(
     PixivServer.routers.health.router,
     prefix="/api/health"
 )
 app.include_router(
     PixivServer.routers.metadata_queue.router,
-    prefix="/api/queue/metadata"
+    prefix="/api/queue/metadata",
+    dependencies=auth_dependency,
 )
 app.include_router(
     PixivServer.routers.download_queue.router,
-    prefix="/api/queue/download"
+    prefix="/api/queue/download",
+    dependencies=auth_dependency,
 )
 app.include_router(
     PixivServer.routers.download_queue.router,
     prefix="/api/download",
-    deprecated=True
+    deprecated=True,
+    dependencies=auth_dependency,
 )
 app.include_router(
     PixivServer.routers.server.router,
-    prefix="/api/server"
+    prefix="/api/server",
+    dependencies=auth_dependency,
 )
 app.include_router(
     PixivServer.routers.database.router,
-    prefix="/api/database"
+    prefix="/api/database",
+    dependencies=auth_dependency,
 )
 # app.include_router(
 #     PixivServer.routers.subscription.router,

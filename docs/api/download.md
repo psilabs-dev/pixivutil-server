@@ -1,5 +1,9 @@
 # Download API
 
+Authentication:
+- Requires `Authorization: Bearer <api-key>` when `PIXIVUTIL_SERVER_API_KEY` is set.
+- If `PIXIVUTIL_SERVER_API_KEY` is unset/empty, authentication is disabled.
+
 `POST /api/queue/download/artwork/{artwork_id}`
 
 Queue download of artwork by ID.

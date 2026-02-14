@@ -42,6 +42,18 @@ curl -X POST http://localhost:8000/api/queue/download/artwork/{artwork-id-here}
 
 `/api/download/*` remains available as a deprecated compatibility alias.
 
+### API Authentication
+
+Set `PIXIVUTIL_SERVER_API_KEY` to enable API key authentication for protected endpoints.
+
+Header format:
+
+```text
+Authorization: Bearer <your-api-key>
+```
+
+If `PIXIVUTIL_SERVER_API_KEY` is not set (or is empty), API key authentication is disabled.
+
 ### API Reference
 
 - [download](/docs/api/download.md)
