@@ -1,4 +1,5 @@
 import json
+from typing import Any
 
 import pytest
 import pytest_asyncio
@@ -57,3 +58,38 @@ async def test_raise_api_error(server_url: str) -> None:
             await client._request("GET", "/boom")
         assert exc.value.status == 400
         assert exc.value.message == "bad request"
+
+
+@pytest.mark.asyncio
+async def test_ssl_flag_is_forwarded() -> None:
+    captured: dict[str, Any] = {}
+
+    class FakeResponse:
+        status = 200
+
+        async def text(self) -> str:
+            return json.dumps({"ok": True})
+
+    class FakeContextManager:
+        def __init__(self, response: FakeResponse):
+            self._response = response
+
+        async def __aenter__(self) -> FakeResponse:
+            return self._response
+
+        async def __aexit__(self, *_: object) -> None:
+            return None
+
+    class FakeSession:
+        closed = False
+
+        def request(self, method: str, url: str, **kwargs: Any) -> FakeContextManager:
+            captured["method"] = method
+            captured["url"] = url
+            captured["kwargs"] = kwargs
+            return FakeContextManager(FakeResponse())
+
+    client = PixivAsyncClient("https://example.invalid", ssl=False, session=FakeSession())  # type: ignore[arg-type]
+    payload = await client._request("GET", "/probe")
+    assert payload["ok"] is True
+    assert captured["kwargs"]["ssl"] is False

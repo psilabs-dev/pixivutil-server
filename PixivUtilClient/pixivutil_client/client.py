@@ -27,11 +27,13 @@ class PixivAsyncClient:
         base_url: str,
         api_key: str | None = None,
         timeout_seconds: float = 30,
+        ssl: bool | None = True,
         session: aiohttp.ClientSession | None = None,
     ) -> None:
         self.base_url = base_url.rstrip("/")
         self.api_key = api_key
         self.timeout_seconds = timeout_seconds
+        self.ssl = ssl
         self._session = session
         self._owns_session = session is None
 
@@ -76,6 +78,7 @@ class PixivAsyncClient:
                 params=params,
                 json=json_body,
                 headers=self._auth_headers(),
+                ssl=self.ssl,
             ) as response:
                 payload = await self._decode_payload(response)
                 if response.status >= 400:
