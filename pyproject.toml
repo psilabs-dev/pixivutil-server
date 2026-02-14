@@ -16,7 +16,7 @@ dependencies = [
   "aiofiles>=25.1.0",
   "celery>=5.5.3",
   "fastapi>=0.122.0",
-  "uvicorn>=0.38.0",
+  "uvicorn[standard]>=0.38.0",
 ]
 
 [project.optional-dependencies]

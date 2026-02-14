@@ -30,7 +30,7 @@ chown -R "${USER_ID}:${GROUP_ID}" \
 
 # Run command as runtime UID/GID.
 if [ "$(id -u)" = "0" ]; then
-  exec gosu "${USER_ID}:${GROUP_ID}" uv run "$@"
+  exec gosu "${USER_ID}:${GROUP_ID}" "$@"
 else
-  exec uv run "$@"
+  exec "$@"
 fi
