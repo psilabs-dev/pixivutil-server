@@ -13,14 +13,17 @@ RUN apt-get update && apt-get install -y ffmpeg sqlite3 gosu && \
 WORKDIR /workdir
 
 # Install dependencies
-COPY pyproject.toml /workdir/
-COPY uv.lock /workdir/
-COPY README.md /workdir/
-COPY PixivClient/pyproject.toml /workdir/PixivClient/pyproject.toml
+COPY pyproject.toml                     /workdir/
+COPY uv.lock                            /workdir/
+COPY README.md                          /workdir/
+COPY PixivUtilClient/pyproject.toml     /workdir/PixivUtilClient/pyproject.toml
 RUN uv sync --extra pixivutil2 --locked --no-install-workspace
 
 # Copy project files and install the project
-COPY . /workdir
+COPY LICENSE                            /workdir/
+COPY PixivServer                        /workdir/PixivServer
+COPY PixivUtil2                         /workdir/PixivUtil2
+COPY PixivUtilClient                    /workdir/PixivUtilClient
 RUN uv sync --extra pixivutil2 --locked
 
 # Create default user/group (UID/GID may be overridden at runtime)
