@@ -13,6 +13,7 @@ from PixivServer.models.pixiv_metadata import (
     PixivImageToTag,
     PixivMasterSeries,
     PixivImageToSeries,
+    PixivDateInfo,
     PixivTagInfo,
     PixivSeriesInfo
 )
@@ -463,12 +464,32 @@ class PixivUtilRepository:
                     )
                 tags.append((image_to_tag, master_tag, tag_translation))
 
+            # Get server-mode date metadata
+            cursor.execute(
+                """SELECT image_id, created_date_epoch, uploaded_date_epoch,
+                          created_date, last_update_date
+                   FROM pixiv_date_info
+                   WHERE image_id = ?""",
+                (image_id,)
+            )
+            date_row = cursor.fetchone()
+            dates = None
+            if date_row is not None:
+                dates = PixivDateInfo(
+                    image_id=date_row[0],
+                    created_date_epoch=date_row[1],
+                    uploaded_date_epoch=date_row[2],
+                    created_date=date_row[3],
+                    last_update_date=date_row[4]
+                )
+
             return PixivImageComplete(
                 image=image,
                 member=member,
                 pages=pages,
                 series=series,
-                tags=tags
+                tags=tags,
+                dates=dates
             )
         except Exception as e:
             logger.error(f"Error getting image data for {image_id}: {e}")

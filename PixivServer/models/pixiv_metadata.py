@@ -51,6 +51,16 @@ class PixivMasterTag(BaseModel):
     created_date: str
     last_update_date: str
 
+class PixivDateInfo(BaseModel):
+    """
+    pixiv_date_info
+    """
+    image_id: int
+    created_date_epoch: int
+    uploaded_date_epoch: int
+    created_date: str
+    last_update_date: str
+
 class PixivTagTranslation(BaseModel):
     """
     pixiv_tag_translation
@@ -109,6 +119,7 @@ class PixivImageComplete(BaseModel):
     pages: list[PixivMangaImage]
     series: Optional[tuple[PixivImageToSeries, PixivMasterSeries]] = Field(None, description="Optional series info from an artwork, if available.")
     tags: list[tuple[PixivImageToTag, PixivMasterTag, Optional[PixivTagTranslation]]]
+    dates: Optional[PixivDateInfo] = Field(None, description="Optional created/uploaded date info for artwork.")
 
 class PixivTagInfo(BaseModel):
     """
