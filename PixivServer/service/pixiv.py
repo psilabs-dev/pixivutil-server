@@ -134,7 +134,18 @@ class PixivUtilService:
     def open_database(self):
         global __dbManager__
         __dbManager__ = PixivDBManagerMultiThread(root_directory=__config__.rootDirectory, target=__config__.dbPath)
+        self.configure_database_connection(__dbManager__.conn)
         __dbManager__.createDatabase()
+
+    def configure_database_connection(self, connection: sqlite3.Connection) -> None:
+        """Apply server-side SQLite pragmas to reduce lock contention."""
+        cursor = connection.cursor()
+        try:
+            cursor.execute("PRAGMA journal_mode=WAL")
+            cursor.execute("PRAGMA synchronous=NORMAL")
+            cursor.execute("PRAGMA busy_timeout=30000")
+        finally:
+            cursor.close()
 
     def remove_database(self):
         __dbManager__.close()

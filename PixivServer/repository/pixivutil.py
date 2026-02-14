@@ -29,7 +29,14 @@ class PixivUtilRepository:
         self.connection: sqlite3.Connection = None
 
     def open(self):
-        self.connection = sqlite3.connect(self.db_path)
+        self.connection = sqlite3.connect(self.db_path, timeout=30.0)
+        cursor = self.connection.cursor()
+        try:
+            cursor.execute("PRAGMA journal_mode=WAL")
+            cursor.execute("PRAGMA synchronous=NORMAL")
+            cursor.execute("PRAGMA busy_timeout=30000")
+        finally:
+            cursor.close()
 
     def close(self):
         if self.connection is not None:

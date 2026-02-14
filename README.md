@@ -111,6 +111,20 @@ The web server component uses FastAPI, and the worker component uses Celery list
 
 To support durable messages with RabbitMQ, a timeout configuration is applied for the queue server. See [issue](https://github.com/docker-library/rabbitmq/issues/106).
 
+### Server-Side Database Optimizations
+
+PixivUtil Server applies server-managed SQLite runtime settings. These settings are applied at connection startup in both the Pixiv service layer and repository layer, and allow for better concurrent reads from the API layer.
+
+`PRAGMA journal_mode=WAL` is set to improve database concurrency handling. While not a server that handles many users, PixivServer is expected to handle reasonably concurrent reads while worker is performing single writes.
+
+`PRAGMA synchronous=NORMAL` is a consequence of applying `WAL` to the database for performance purposes.
+
+`PRAGMA busy_timeout=30000` is set to not throw an error immediately when the database is locked.
+
+- [Write-Ahead Logging](https://sqlite.org/wal.html)
+- [Synchronous documentation](https://www.sqlite.org/pragma.html#pragma_synchronous)
+- [Busy timeout](https://www.sqlite.org/c3ref/busy_timeout.html)
+
 ### Command Line Workflows
 
 `uv` is the recommended Python project manager for development:
