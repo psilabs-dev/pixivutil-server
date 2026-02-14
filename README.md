@@ -29,16 +29,6 @@ curl -X POST http://localhost:8000/api/queue/download/artwork/{artwork-id-here}
 
 `/api/download/*` remains available as a deprecated compatibility alias.
 
-### API Authentication
-
-Set `PIXIVUTIL_SERVER_API_KEY` to enable API key authentication for protected endpoints.
-
-Header format:
-
-```text
-Authorization: Bearer <your-api-key>
-```
-
 If `PIXIVUTIL_SERVER_API_KEY` is not set (or is empty), API key authentication is disabled.
 
 An nginx [configuration file](/nginx/default.conf) is attached for your reverse proxy reference.
@@ -86,9 +76,30 @@ PixivUtil server applies a downstream server flavor of PixivUtil2 called "Server
 
 For further configuration, apply them at `.pixivUtil2/conf/conf.ini` (refer to [Pixivutil2](https://github.com/Nandaka/PixivUtil2) configuration options). You should shutdown PixivUtil server and remove the backup `.ini` file before applying the changes and restarting.
 
-### Environment Variable Configuration
-
 Supported environment variable overrides. See `PixivServer/configuration/pixivutil.py`.
+
+### User Configuration
+
+Docker user mapping:
+- `PUID` and `PGID` set the UID/GID used by the server and worker containers (default `1000:1000`).
+
+Any directories that were previously root should be set to the desired UID/GID pair.
+
+If there are file permission issues, you may override the user entrypoint and maintain the container user as root.
+
+```yaml
+entrypoint: ["uv", "run"] # use this if you want to keep a non-root user.
+```
+
+### API Authentication
+
+Set `PIXIVUTIL_SERVER_API_KEY` to enable API key authentication for protected endpoints.
+
+Header format:
+
+```text
+Authorization: Bearer <your-api-key>
+```
 
 ## Architecture and Development
 
@@ -105,7 +116,7 @@ To support durable messages with RabbitMQ, a timeout configuration is applied fo
 `uv` is the recommended Python project manager for development:
 
 ```sh
-uv sync --extra dev --extra pixivutil2  # sync dev + PixivUtil2 dependencies
+uv sync --extra pixivutil2              # sync dev + PixivUtil2 dependencies
 uv run pytest tests                     # run tests
 uv run ruff check .                     # run ruff lint check
 ```
