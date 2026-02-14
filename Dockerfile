@@ -16,7 +16,8 @@ WORKDIR /workdir
 COPY pyproject.toml /workdir/
 COPY uv.lock /workdir/
 COPY README.md /workdir/
-RUN uv sync --extra pixivutil2 --locked --no-install-project
+COPY PixivClient/pyproject.toml /workdir/PixivClient/pyproject.toml
+RUN uv sync --extra pixivutil2 --locked --no-install-workspace
 
 # Copy project files and install the project
 COPY . /workdir

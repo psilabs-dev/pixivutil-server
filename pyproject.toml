@@ -49,3 +49,8 @@ exclude = [
 [tool.uv.build-backend]
 module-name = "PixivServer"
 module-root = ""
+
+[tool.uv.workspace]
+members = [
+    "PixivUtilClient",
+]
