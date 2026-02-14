@@ -29,3 +29,22 @@ class DownloadArtworksByTagsRequest(BaseModel):
 class DeleteArtworkByIdRequest(BaseModel):
     artwork_id: int
     delete_metadata: bool = True
+
+
+class DownloadMemberMetadataByIdRequest(BaseModel):
+    member_id: int
+
+
+class DownloadArtworkMetadataByIdRequest(BaseModel):
+    artwork_id: int
+
+
+class DownloadSeriesMetadataByIdRequest(BaseModel):
+    series_id: int
+
+
+class DownloadTagMetadataByIdRequest(BaseModel):
+    tag: str
+    filter_mode: Literal[
+        "none", "pixpedia", "translation", "pixpedia_or_translation"
+    ] = "none"

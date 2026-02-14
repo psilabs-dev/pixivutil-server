@@ -1,5 +1,6 @@
 from datetime import timedelta
 import datetime
+import sqlite3
 from typing import Literal, Optional
 from celery.result import AsyncResult
 import logging
@@ -7,13 +8,43 @@ from fastapi import APIRouter, Response
 from fastapi.responses import JSONResponse
 import urllib.parse
 
-from PixivServer.service.pixiv import service
+from PixivServer.repository.pixivutil import PixivUtilRepository
 from PixivServer.worker import delete_artwork_by_id, download_artworks_by_id, download_artworks_by_member_id, download_artworks_by_tag
 from PixivServer.models.pixiv_worker import DeleteArtworkByIdRequest, DownloadArtworkByIdRequest, DownloadArtworksByMemberIdRequest, DownloadArtworksByTagsRequest
 from PixivServer.utils import is_valid_date
 
 logger = logging.getLogger('uvicorn.pixivutil')
 router = APIRouter()
+
+def get_artwork_and_member_name_from_db(artwork_id: int) -> tuple[Optional[str], Optional[str]]:
+    repository = PixivUtilRepository()
+    try:
+        repository.open()
+        image_data = repository.get_image_data_by_id(artwork_id)
+        return image_data.image.title, image_data.member.name
+    except KeyError:
+        return None, None
+    except sqlite3.Error as e:
+        logger.error(f"Database error while getting artwork metadata for {artwork_id}: {e}")
+        return None, None
+    finally:
+        repository.close()
+
+
+def get_member_name_from_db(member_id: int) -> Optional[str]:
+    repository = PixivUtilRepository()
+    try:
+        repository.open()
+        member_data = repository.get_member_data_by_id(member_id)
+        return member_data.member.name
+    except KeyError:
+        return None
+    except sqlite3.Error as e:
+        logger.error(f"Database error while getting member metadata for {member_id}: {e}")
+        return None
+    finally:
+        repository.close()
+
 
 @router.post("/artwork/{artwork_id}")
 async def queue_download_artwork_by_id(artwork_id: str) -> Response:
@@ -22,12 +53,13 @@ async def queue_download_artwork_by_id(artwork_id: str) -> Response:
     """
     logger.info(f"Downloading Pixiv artwork by image ID: {artwork_id}.")
     request = DownloadArtworkByIdRequest(artwork_id=int(artwork_id))
-    artwork_title = service.get_artwork_name(request.artwork_id)
+    artwork_title, member_name = get_artwork_and_member_name_from_db(request.artwork_id)
     task: AsyncResult = download_artworks_by_id.delay(request.model_dump())
     return JSONResponse({
         "task_id": task.id,
         'artwork_id': artwork_id,
         "artwork_title": artwork_title,
+        "member_name": member_name,
     })
 
 @router.post("/member/{member_id}")
@@ -37,7 +69,7 @@ async def queue_download_artworks_by_member_id(member_id: str) -> Response:
     """
     logger.info(f"Downloading Pixiv artworks by member ID: {member_id}.")
     request = DownloadArtworksByMemberIdRequest(member_id=int(member_id))
-    member_name = service.get_member_name(request.member_id)
+    member_name = get_member_name_from_db(request.member_id)
     task: AsyncResult = download_artworks_by_member_id.delay(request.model_dump())
     return JSONResponse({
         "task_id": task.id,

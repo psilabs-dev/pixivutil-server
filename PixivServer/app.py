@@ -8,9 +8,9 @@ import time
 import PixivServer
 import PixivServer.routers
 import PixivServer.routers.database
-import PixivServer.routers.download
+import PixivServer.routers.download_queue
 import PixivServer.routers.health
-import PixivServer.routers.metadata
+import PixivServer.routers.metadata_queue
 import PixivServer.routers.server
 # import PixivServer.routers.subscription
 import PixivServer.service
@@ -24,7 +24,7 @@ async def lifespan(_: FastAPI):
         logger.info("Setting up server.")
         # startup actions
         time.sleep(5)
-        PixivServer.service.pixiv.service.open()
+        PixivServer.service.pixiv.service.open(validate_pixiv_login=False)
         # PixivServer.service.subscription_service.open()
     except Exception as e:
         print(f"Encountered exception during application setup: {traceback.format_exc()}")
@@ -44,12 +44,17 @@ app.include_router(
     prefix="/api/health"
 )
 app.include_router(
-    PixivServer.routers.metadata.router,
-    prefix="/api/metadata"
+    PixivServer.routers.metadata_queue.router,
+    prefix="/api/queue/metadata"
 )
 app.include_router(
-    PixivServer.routers.download.router,
-    prefix="/api/download"
+    PixivServer.routers.download_queue.router,
+    prefix="/api/queue/download"
+)
+app.include_router(
+    PixivServer.routers.download_queue.router,
+    prefix="/api/download",
+    deprecated=True
 )
 app.include_router(
     PixivServer.routers.server.router,
