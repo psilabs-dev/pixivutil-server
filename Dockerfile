@@ -24,7 +24,7 @@ COPY . /workdir
 RUN uv sync --extra pixivutil2 --locked
 
 # Create default user/group (UID/GID may be overridden at runtime)
-RUN groupadd -g 1000 app && useradd -m -u 1000 -g app -s /bin/sh app
+RUN groupadd -g 1000 pixivuser && useradd -m -u 1000 -g pixivuser -s /bin/sh pixivuser
 
 COPY docker/entrypoint.sh /entrypoint.sh
 RUN chmod +x /entrypoint.sh
