@@ -1,5 +1,7 @@
 # PixivUtil Server
 
+[![Server tag](https://img.shields.io/github/v/tag/psilabs-dev/pixivutil-server?sort=semver&filter=v*&label=server)](https://github.com/psilabs-dev/pixivutil-server/tags)
+
 PixivUtil server is a self-hosted, containerized server solution which provides [PixivUtil2](https://github.com/Nandaka/PixivUtil2) content download operations through an HTTP API interface.
 
 The scope of PixivUtil server covers only key Pixiv-related operations within a `uv` environment or Docker cluster. Non-Pixiv APIs, such as Fantia or Fanbox, are not supported, as they cannot be reliably tested.
