@@ -16,6 +16,7 @@ dependencies = [
   "aiofiles>=25.1.0",
   "celery>=5.5.3",
   "fastapi>=0.122.0",
+  "pixivutil-server-common>=0.1.0",
   "uvicorn[standard]>=0.38.0",
 ]
 
@@ -47,7 +48,11 @@ module-root = ""
 [tool.uv.workspace]
 members = [
     "PixivUtilClient",
+    "PixivServerCommon",
 ]
+
+[tool.uv.sources]
+pixivutil-server-common = { workspace = true }
 
 [dependency-groups]
 dev = [

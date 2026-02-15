@@ -27,6 +27,12 @@ asyncio.run(main())
 
 ## Install
 
+From PyPI:
+
+```sh
+uv pip install pixivutil-server-client
+```
+
 From the `pixivutil-server` project root:
 
 ```sh

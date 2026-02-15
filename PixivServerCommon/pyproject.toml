@@ -1,0 +1,20 @@
+[build-system]
+requires = ["uv_build>=0.9.25,<0.10.0"]
+build-backend = "uv_build"
+
+[project]
+name = "pixivutil-server-common"
+version = "0.1.0"
+description = "Shared models and type contracts for PixivUtil Server packages"
+readme = "README.md"
+requires-python = ">=3.12"
+authors = [
+  { name = "psilabs-dev" }
+]
+dependencies = [
+  "pydantic>=2.12.4",
+]
+
+[tool.uv.build-backend]
+module-name = "pixivutil_server_common"
+module-root = ""

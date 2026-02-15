@@ -20,12 +20,14 @@ WORKDIR /workdir
 COPY --link pyproject.toml                      /workdir/
 COPY --link uv.lock                             /workdir/
 COPY --link README.md                           /workdir/
+COPY --link PixivServerCommon/pyproject.toml    /workdir/PixivServerCommon/pyproject.toml
 COPY --link PixivUtilClient/pyproject.toml      /workdir/PixivUtilClient/pyproject.toml
 RUN --mount=type=cache,target=/root/.cache/uv \
     uv sync --extra pixivutil2 --locked --no-install-workspace --no-editable --compile-bytecode
 
 # Copy project files and install the project
 COPY --link LICENSE                             /workdir/
+COPY --link PixivServerCommon                   /workdir/PixivServerCommon
 COPY --link PixivServer                         /workdir/PixivServer
 COPY --link PixivUtil2                          /workdir/PixivUtil2
 COPY --link PixivUtilClient                     /workdir/PixivUtilClient

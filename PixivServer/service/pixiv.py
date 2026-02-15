@@ -4,7 +4,6 @@ import sys
 import traceback
 
 import logging
-from typing import Optional
 
 sys.path.append('PixivUtil2')
 
@@ -257,7 +256,7 @@ class PixivUtilService:
                 PixivHelper.print_and_log("warning", f"Artwork with ID {request.artwork_id} not found in database.")
                 return
 
-            master_image_save_name: Optional[str] = master_image_row[0]
+            master_image_save_name: str | None = master_image_row[0]
             is_archive_mode = master_image_save_name and master_image_save_name.endswith('.zip')
 
             if master_image_save_name is not None:
@@ -272,7 +271,7 @@ class PixivUtilService:
                 ).fetchall()
 
                 for manga_image_row in manga_image_rows:
-                    manga_image_save_name: Optional[str] = manga_image_row[0]
+                    manga_image_save_name: str | None = manga_image_row[0]
                     if manga_image_save_name is not None and manga_image_save_name != master_image_save_name:
                         files_to_delete.append(manga_image_save_name)
 

@@ -14,11 +14,15 @@ authors = [
 dependencies = [
     "aiohttp>=3.13.3",
     "pydantic>=2.12.4",
+    "pixivutil-server-common>=0.1.0",
 ]
 
 [tool.uv.build-backend]
 module-name = "pixivutil_client"
 module-root = ""
+
+[tool.uv.sources]
+pixivutil-server-common = { workspace = true }
 
 [dependency-groups]
 dev = [

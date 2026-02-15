@@ -1,7 +1,3 @@
-"""
-Compatibility module re-exporting shared API contracts.
-"""
-
 from pixivutil_server_common.models import (
     PixivDateInfo,
     PixivImageComplete,
@@ -16,6 +12,10 @@ from pixivutil_server_common.models import (
     PixivSeriesInfo,
     PixivTagInfo,
     PixivTagTranslation,
+    QueueTaskResponse,
+    TagMetadataFilterMode,
+    TagSortOrder,
+    TagTypeMode,
 )
 
 __all__ = [
@@ -32,4 +32,8 @@ __all__ = [
     "PixivSeriesInfo",
     "PixivTagInfo",
     "PixivTagTranslation",
+    "QueueTaskResponse",
+    "TagMetadataFilterMode",
+    "TagSortOrder",
+    "TagTypeMode",
 ]

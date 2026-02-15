@@ -1,6 +1,5 @@
 import logging
 import urllib.parse
-from typing import Literal
 
 from celery.result import AsyncResult
 from fastapi import APIRouter
@@ -18,6 +17,7 @@ from PixivServer.worker import (
     download_series_metadata_by_id,
     download_tag_metadata_by_id,
 )
+from pixivutil_server_common.models import TagMetadataFilterMode
 
 logger = logging.getLogger("uvicorn.pixivutil")
 router = APIRouter()
@@ -77,9 +77,7 @@ async def queue_download_series_metadata_by_id(series_id: str) -> JSONResponse:
 @router.post("/tag/{tag}")
 async def queue_download_tag_metadata_by_id(
     tag: str,
-    filter_mode: Literal[
-        "none", "pixpedia", "translation", "pixpedia_or_translation"
-    ] = "none",
+    filter_mode: TagMetadataFilterMode = "none",
 ) -> JSONResponse:
     """
     Queue download of tag metadata by tag ID/name.

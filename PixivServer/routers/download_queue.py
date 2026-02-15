@@ -1,7 +1,6 @@
 from datetime import timedelta
 import datetime
 import sqlite3
-from typing import Literal, Optional
 from celery.result import AsyncResult
 import logging
 from fastapi import APIRouter, Response
@@ -12,11 +11,12 @@ from PixivServer.repository.pixivutil import PixivUtilRepository
 from PixivServer.worker import delete_artwork_by_id, download_artworks_by_id, download_artworks_by_member_id, download_artworks_by_tag
 from PixivServer.models.pixiv_worker import DeleteArtworkByIdRequest, DownloadArtworkByIdRequest, DownloadArtworksByMemberIdRequest, DownloadArtworksByTagsRequest
 from PixivServer.utils import is_valid_date
+from pixivutil_server_common.models import TagSortOrder, TagTypeMode
 
 logger = logging.getLogger('uvicorn.pixivutil')
 router = APIRouter()
 
-def get_artwork_and_member_name_from_db(artwork_id: int) -> tuple[Optional[str], Optional[str]]:
+def get_artwork_and_member_name_from_db(artwork_id: int) -> tuple[str | None, str | None]:
     repository = PixivUtilRepository()
     try:
         repository.open()
@@ -31,7 +31,7 @@ def get_artwork_and_member_name_from_db(artwork_id: int) -> tuple[Optional[str],
         repository.close()
 
 
-def get_member_name_from_db(member_id: int) -> Optional[str]:
+def get_member_name_from_db(member_id: int) -> str | None:
     repository = PixivUtilRepository()
     try:
         repository.open()
@@ -80,13 +80,13 @@ async def queue_download_artworks_by_member_id(member_id: str) -> Response:
 @router.post("/tag/{tag_name}")
 async def queue_download_artworks_by_tag(
     tag_name: str, 
-    bookmark_count: Optional[int] = None, 
-    sort_order: Literal['date_d', 'date', 'popular_d', 'popular_male_d', 'popular_female_d'] = 'date_d', 
-    type_mode: Literal['a', 'i', 'm'] = 'a',
+    bookmark_count: int | None = None,
+    sort_order: TagSortOrder = 'date_d',
+    type_mode: TagTypeMode = 'a',
     wildcard: bool = False,
-    start_date: Optional[str] = None,
-    end_date: Optional[str] = None,
-    lookback_days: Optional[int] = None,
+    start_date: str | None = None,
+    end_date: str | None = None,
+    lookback_days: int | None = None,
 ) -> Response:
     """
     Download Pixiv images that have a given tag.
