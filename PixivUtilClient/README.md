@@ -39,12 +39,6 @@ From the `pixivutil-server` project root:
 uv pip install -e ./PixivUtilClient
 ```
 
-From Git (published as a subdirectory):
-
-```sh
-uv pip install "git+https://github.com/psilabs-dev/pixivutil-server.git@dev-2.4.0/main#subdirectory=PixivUtilClient"
-```
-
 ## Test
 
 From the `pixivutil-server` project root:
