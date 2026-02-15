@@ -1,13 +1,20 @@
 # Download API
 
-`POST /api/download/artwork/{artwork_id}`
+Authentication:
+- Requires `Authorization: Bearer <api-key>` when `PIXIVUTIL_SERVER_API_KEY` is set.
+- If `PIXIVUTIL_SERVER_API_KEY` is unset/empty, authentication is disabled.
 
-Send a request to download artwork by ID.
+`POST /api/queue/download/artwork/{artwork_id}`
 
-`POST /api/download/member/{member_id}`
+Queue download of artwork by ID.
 
-Send a request to download an artist's artworks by their artist/member ID.
+`POST /api/queue/download/member/{member_id}`
 
-`POST /api/download/tag/{tag}`
+Queue download of a member's artworks by member ID.
 
-Send a request to download all artworks with a given tag (tags should be URL encoded).
+`POST /api/queue/download/tag/{tag}`
+
+Queue download of all artworks with a given tag (tags should be URL encoded).
+
+> Compatibility note: `/api/download/*` endpoints are still available but
+> deprecated. Use `/api/queue/download/*` as the canonical path.

@@ -15,3 +15,29 @@ __pycache__
 
 # Compiled Documentation
 docs/_build
+
+# Exclude test and VCS metadata copied from submodule/workspace
+PixivUtil2/test
+PixivUtil2/test_data
+PixivUtil2/.git
+PixivUtil2/.gitignore
+PixivUtilClient/tests
+
+# Exclude PixivUtil2 non-runtime root files to reduce Docker context/image size
+PixivUtil2/.gitattributes
+PixivUtil2/.pep8
+PixivUtil2/.pylintrc
+PixivUtil2/.python-version
+PixivUtil2/.travis.yml
+PixivUtil2/Dockerfile
+PixivUtil2/ISSUE_TEMPLATE.md
+PixivUtil2/MANIFEST.in
+PixivUtil2/changelog.txt
+PixivUtil2/freeimage-3.15.4-win32.dll
+PixivUtil2/icon2.ico
+PixivUtil2/pyproject.toml
+PixivUtil2/readme.md
+PixivUtil2/requirements.txt
+PixivUtil2/setup.py
+PixivUtil2/uv.lock
+PixivUtil2/__pycache__/

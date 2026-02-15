@@ -2,8 +2,8 @@
 Model layer for PixivUtil worker queue processing interface.
 """
 
-from typing import Literal, Optional
 from pydantic import BaseModel
+from pixivutil_server_common.models import TagMetadataFilterMode, TagSortOrder, TagTypeMode
 
 
 class DownloadArtworkByIdRequest(BaseModel):
@@ -18,14 +18,29 @@ class DownloadArtworksByTagsRequest(BaseModel):
     """
     tags: str
     wildcard: bool = False
-    start_date: Optional[str] = None
-    end_date: Optional[str] = None
-    bookmark_count: Optional[int] = None
-    sort_order: Literal[
-        'date_d', 'date', 'popular_d', 'popular_male_d', 'popular_female_d',
-    ]
-    type_mode: Literal['a', 'i', 'm'] = 'a'
+    start_date: str | None = None
+    end_date: str | None = None
+    bookmark_count: int | None = None
+    sort_order: TagSortOrder
+    type_mode: TagTypeMode = 'a'
 
 class DeleteArtworkByIdRequest(BaseModel):
     artwork_id: int
     delete_metadata: bool = True
+
+
+class DownloadMemberMetadataByIdRequest(BaseModel):
+    member_id: int
+
+
+class DownloadArtworkMetadataByIdRequest(BaseModel):
+    artwork_id: int
+
+
+class DownloadSeriesMetadataByIdRequest(BaseModel):
+    series_id: int
+
+
+class DownloadTagMetadataByIdRequest(BaseModel):
+    tag: str
+    filter_mode: TagMetadataFilterMode = "none"

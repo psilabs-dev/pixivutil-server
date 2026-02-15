@@ -36,8 +36,9 @@ jobs:
 
       - name: Install dependencies
         run: |
-          uv sync --extra dev --extra pixivutil2
+          uv sync --extra pixivutil2
 
       - name: Run unit tests
         run: |
           uv run pytest tests
+          uv run --package pixivutil-server-client pytest PixivUtilClient/tests

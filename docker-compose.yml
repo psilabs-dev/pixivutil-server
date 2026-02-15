@@ -26,9 +26,12 @@ services:
   pixivutil-worker:
     build: .
     container_name: pixivutil-worker
-    entrypoint: ["uv", "run"]
+    # entrypoint: ["uv", "run"] # use this if you want to keep a non-root user.
     command: ["celery", "-A", "PixivServer.worker.pixiv_worker", "worker", "--concurrency=1", "--loglevel=info", "-B"]
     environment:
+      - PUID=${PUID:-1000}
+      - PGID=${PGID:-1000}
+      - CELERYBEAT_SCHEDULE=/workdir/.pixivUtil2/celerybeat-schedule
       - PIXIVUTIL_COOKIE=$PIXIVUTIL_COOKIE
       - RABBITMQ_BROKER_URL=amqp://guest:guest@rabbitmq:5672
     volumes:
@@ -41,18 +44,29 @@ services:
   pixivutil-server:
     build: .
     container_name: pixivutil-server
-    entrypoint: ["uv", "run"]
+    # entrypoint: ["uv", "run"] # use this if you want to keep a non-root user.
     command: ["uvicorn", "PixivServer.app:app", "--host", "0.0.0.0", "--port", "8000", "--log-level", "info"]
     environment:
+      - PUID=${PUID:-1000}
+      - PGID=${PGID:-1000}
       - PIXIVUTIL_COOKIE=$PIXIVUTIL_COOKIE
+      - PIXIVUTIL_SERVER_API_KEY=$PIXIVUTIL_SERVER_API_KEY
       - RABBITMQ_BROKER_URL=amqp://guest:guest@rabbitmq:5672
     volumes:
       - pixivutil-data:/workdir/.pixivUtil2
       - pixivutil-downloads:/workdir/downloads
-    ports:
-      - 8000:8000
     depends_on:
       rabbitmq:
         condition: service_healthy
     env_file:
       - .env
+
+  reverse-proxy:
+    image: nginx:alpine
+    container_name: pixivutil-nginx
+    volumes:
+      - ./nginx/default.conf:/etc/nginx/conf.d/default.conf:ro
+    ports:
+      - 8000:80
+    depends_on:
+      - pixivutil-server

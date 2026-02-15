@@ -1,6 +1,5 @@
 import logging
 import time
-from typing import Dict, List, Tuple
 
 from PixivServer.service.pixiv import service as pixiv_service
 from PixivServer.repository.subscription import SubscriptionRepository
@@ -24,7 +23,7 @@ class SubscriptionService:
         self.subscription_db.close()
         self.pixivutil_db.close()
 
-    def run_tag_subscription_job(self) -> Dict[str, List[str]]:
+    def run_tag_subscription_job(self) -> dict[str, list[str]]:
         logger.info("Triggering automated tag download job...")
         subscribed_tags = self.get_subscribed_tags()
 
@@ -36,7 +35,7 @@ class SubscriptionService:
             pixiv_service.download_artworks_by_tag(tag_id)
             logger.info(f"Downloaded artworks by tag: {tag_id}")
 
-    def run_member_subscription_job(self) -> Dict[str, List[str]]:
+    def run_member_subscription_job(self) -> dict[str, list[str]]:
         logger.info("Triggering automated artist download job...")
         subscribed_members = self.get_subscribed_members()
 
@@ -72,7 +71,7 @@ class SubscriptionService:
             time.sleep(1)
         return new_artwork_titles_by_member_id
 
-    def get_subscribed_members(self) -> List[Tuple[int, str]]:
+    def get_subscribed_members(self) -> list[tuple[int, str]]:
         logger.info("Getting members subscribed to.")
         subscribed_members = self.subscription_db.select_member_subscriptions()
         if subscribed_members is None:
@@ -80,20 +79,27 @@ class SubscriptionService:
             return list()
         return subscribed_members
 
-    def add_member_subscription(self, member_id: str) -> Dict[str, str]:
+    def add_member_subscription(self, member_id: str) -> dict[str, str]:
         if not member_id.isdigit():
             raise TypeError(f'Member ID {member_id} cannot be converted to integer.')
         member_id = int(member_id)
+        member_name = ""
+
+        self.subscription_db.open()
+        self.pixivutil_db.open()
         try:
-            member_data = pixiv_service.get_member_data(member_id)[0]
-        except Exception as e:
-            logger.error(f"Failed to get member data for member: {member_id}: ", e)
-            raise e
-        member_name = member_data.artistName
-        if not member_name:
-            logger.warning(f'Member ID {member_id} was found with no member name, setting to empty string.')
-            member_name = ''
-        self.subscription_db.add_member_subscription(member_id, member_name)
+            try:
+                member_data = self.pixivutil_db.get_member_data_by_id(member_id)
+                member_name = member_data.member.name or member_name
+            except KeyError:
+                logger.info(
+                    f"Member metadata not found in SQLite for {member_id}; subscribing with empty name."
+                )
+            self.subscription_db.add_member_subscription(member_id, member_name)
+        finally:
+            self.pixivutil_db.close()
+            self.subscription_db.close()
+
         logger.info(f"Successfully added subscription for: {member_name}")
         return {
             'member_id': member_id,
@@ -116,7 +122,7 @@ class SubscriptionService:
             logger.info(f"Subscription for member ID {member_id} does not exist.")
             return dict()
 
-    def get_subscribed_tags(self) -> List[Tuple[str]]:
+    def get_subscribed_tags(self) -> list[tuple[str]]:
         logger.info("Getting tags subscribed to.")
         subscribed_tags = self.subscription_db.select_tag_subscriptions()
         if subscribed_tags is None:
@@ -124,7 +130,7 @@ class SubscriptionService:
             return list()
         return subscribed_tags
 
-    def add_tag_subscription(self, tag_id: str, bookmark_count: int) -> Dict[str, str]:
+    def add_tag_subscription(self, tag_id: str, bookmark_count: int) -> dict[str, str]:
         self.subscription_db.add_tag_subscription(tag_id, bookmark_count)
         logger.info(f"Successfully added subscription for tag: {tag_id}")
         return {

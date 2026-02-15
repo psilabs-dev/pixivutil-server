@@ -1,6 +1,5 @@
 import logging
 import sqlite3
-from typing import Optional
 from fastapi import APIRouter, Response
 from fastapi.encoders import jsonable_encoder
 import json
@@ -209,7 +208,7 @@ def get_pixiv_series_info_by_id(series_id: str) -> Response:
         repository.close()
 
 @router.get("/member/{member_id}")
-def get_pixiv_member_portfolio_by_id(member_id: Optional[str]) -> Response:
+def get_pixiv_member_portfolio_by_id(member_id: str | None) -> Response:
     """Get member portfolio data from the database."""
     logger.info(f"Getting member data by ID from database: {member_id}.")
 
@@ -258,7 +257,7 @@ def get_pixiv_member_portfolio_by_id(member_id: Optional[str]) -> Response:
         repository.close()
 
 @router.get("/image/{image_id}")
-def get_pixiv_image_data_by_id(image_id: Optional[str]) -> Response:
+def get_pixiv_image_data_by_id(image_id: str | None) -> Response:
     """Get complete image data from the database."""
     logger.info(f"Getting image data by ID from database: {image_id}.")
 

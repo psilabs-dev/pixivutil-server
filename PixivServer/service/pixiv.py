@@ -4,11 +4,19 @@ import sys
 import traceback
 
 import logging
-from typing import Optional
 
 sys.path.append('PixivUtil2')
 
-from PixivServer.models.pixiv_worker import DeleteArtworkByIdRequest, DownloadArtworkByIdRequest, DownloadArtworksByMemberIdRequest, DownloadArtworksByTagsRequest
+from PixivServer.models.pixiv_worker import (
+    DeleteArtworkByIdRequest,
+    DownloadArtworkByIdRequest,
+    DownloadArtworksByMemberIdRequest,
+    DownloadArtworksByTagsRequest,
+    DownloadArtworkMetadataByIdRequest,
+    DownloadMemberMetadataByIdRequest,
+    DownloadSeriesMetadataByIdRequest,
+    DownloadTagMetadataByIdRequest,
+)
 from PixivUtil2 import (
     PixivConfig, 
     PixivBrowserFactory, 
@@ -86,7 +94,7 @@ class PixivUtilService:
 
         return
 
-    def open(self):
+    def open(self, validate_pixiv_login: bool = True):
 
         global __br__
         global __config__
@@ -107,11 +115,13 @@ class PixivUtilService:
         os.makedirs(os.path.dirname(__config__.dbPath), exist_ok=True)
         self.open_database()
         
-        # check if Pixiv cookie is installed / validate login capability.
-        cookie = __config__.cookie
         if __br__ is None:
             __br__ = PixivBrowserFactory.getBrowser(config=__config__)
-        self.login_pixiv(cookie)
+
+        # Worker may validate login at startup. API server should not.
+        if validate_pixiv_login:
+            cookie = __config__.cookie
+            self.login_pixiv(cookie)
         pass
 
     def close(self):
@@ -123,7 +133,18 @@ class PixivUtilService:
     def open_database(self):
         global __dbManager__
         __dbManager__ = PixivDBManagerMultiThread(root_directory=__config__.rootDirectory, target=__config__.dbPath)
+        self.configure_database_connection(__dbManager__.conn)
         __dbManager__.createDatabase()
+
+    def configure_database_connection(self, connection: sqlite3.Connection) -> None:
+        """Apply server-side SQLite pragmas to reduce lock contention."""
+        cursor = connection.cursor()
+        try:
+            cursor.execute("PRAGMA journal_mode=WAL")
+            cursor.execute("PRAGMA synchronous=NORMAL")
+            cursor.execute("PRAGMA busy_timeout=30000")
+        finally:
+            cursor.close()
 
     def remove_database(self):
         __dbManager__.close()
@@ -152,7 +173,6 @@ class PixivUtilService:
     def update_pixiv_cookie(self, new_cookie: str) -> bool:
         __config__.cookie = new_cookie
         __config__.writeConfig(path=configfile)
-        self.login_pixiv(new_cookie)
         return True
 
     def get_member_data(self, member_id: int):
@@ -236,7 +256,7 @@ class PixivUtilService:
                 PixivHelper.print_and_log("warning", f"Artwork with ID {request.artwork_id} not found in database.")
                 return
 
-            master_image_save_name: Optional[str] = master_image_row[0]
+            master_image_save_name: str | None = master_image_row[0]
             is_archive_mode = master_image_save_name and master_image_save_name.endswith('.zip')
 
             if master_image_save_name is not None:
@@ -251,7 +271,7 @@ class PixivUtilService:
                 ).fetchall()
 
                 for manga_image_row in manga_image_rows:
-                    manga_image_save_name: Optional[str] = manga_image_row[0]
+                    manga_image_save_name: str | None = manga_image_row[0]
                     if manga_image_save_name is not None and manga_image_save_name != master_image_save_name:
                         files_to_delete.append(manga_image_save_name)
 
@@ -298,5 +318,41 @@ class PixivUtilService:
         else:
             mode = "archive" if is_archive_mode else "directory"
             PixivHelper.print_and_log("info", f"Successfully deleted artwork ({mode} mode): {request.artwork_id}")
+
+    def download_member_metadata_by_id(self, request: DownloadMemberMetadataByIdRequest):
+        PixivHelper.print_and_log("info", f"Download member metadata by ID: {request.member_id}")
+        PixivArtistHandler.process_member_metadata(
+            sys.modules[__name__],
+            __config__,
+            request.member_id,
+        )
+
+    def download_artwork_metadata_by_id(self, request: DownloadArtworkMetadataByIdRequest):
+        PixivHelper.print_and_log("info", f"Download artwork metadata by ID: {request.artwork_id}")
+        PixivImageHandler.process_image(
+            sys.modules[__name__],
+            __config__,
+            artist=None,
+            image_id=request.artwork_id,
+            useblacklist=False,
+            metadata_only=True,
+        )
+
+    def download_series_metadata_by_id(self, request: DownloadSeriesMetadataByIdRequest):
+        PixivHelper.print_and_log("info", f"Download series metadata by ID: {request.series_id}")
+        PixivImageHandler.process_manga_series_metadata(
+            sys.modules[__name__],
+            __config__,
+            request.series_id,
+        )
+
+    def download_tag_metadata_by_id(self, request: DownloadTagMetadataByIdRequest):
+        PixivHelper.print_and_log("info", f"Download tag metadata: {request.tag} (filter_mode={request.filter_mode})")
+        PixivTagsHandler.process_tag_metadata(
+            sys.modules[__name__],
+            __config__,
+            request.tag,
+            filter_mode=request.filter_mode,
+        )
 
 service = PixivUtilService()

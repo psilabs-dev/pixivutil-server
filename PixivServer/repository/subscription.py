@@ -1,6 +1,5 @@
 import logging
 import sqlite3
-from typing import List, Tuple
 
 from PixivServer.config.pixivutil import config as pixivutil_config
 
@@ -66,8 +65,8 @@ class SubscriptionRepository:
             c.close()
         return result
 
-    def select_member_subscriptions(self) -> List[Tuple[int, str]]:
-        results: List = None
+    def select_member_subscriptions(self) -> list[tuple[int, str]]:
+        results: list = None
 
         try:
             c = self.connection.cursor()
@@ -129,8 +128,8 @@ class SubscriptionRepository:
             c.close()
         return result
 
-    def select_tag_subscriptions(self) -> List[Tuple[str]]:
-        results: List = None
+    def select_tag_subscriptions(self) -> list[tuple[str]]:
+        results: list = None
 
         try:
             c = self.connection.cursor()
