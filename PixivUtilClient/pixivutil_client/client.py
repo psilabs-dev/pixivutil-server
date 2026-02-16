@@ -233,8 +233,7 @@ class PixivAsyncClient:
         return str(payload)
 
     async def update_cookie(self, cookie: str) -> str:
-        encoded_cookie = quote(cookie, safe="")
-        payload = await self._request("PUT", f"/api/server/cookie/{encoded_cookie}")
+        payload = await self._request("PUT", "/api/server/cookie", json_body={"cookie": cookie})
         return str(payload)
 
     async def reset_database(self) -> str:

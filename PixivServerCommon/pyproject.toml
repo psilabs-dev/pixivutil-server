@@ -4,7 +4,7 @@ build-backend = "uv_build"
 
 [project]
 name = "pixivutil-server-common"
-version = "0.1.0"
+version = "0.1.1"
 description = "Shared models and type contracts for PixivUtil Server packages"
 readme = "README.md"
 requires-python = ">=3.12"

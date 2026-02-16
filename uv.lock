@@ -887,7 +887,7 @@ wheels = [
 
 [[package]]
 name = "pixivutil-server"
-version = "2.4.0"
+version = "2.4.2"
 source = { editable = "." }
 dependencies = [
     { name = "aiofiles" },
@@ -978,7 +978,7 @@ dev = [
 
 [[package]]
 name = "pixivutil-server-common"
-version = "0.1.0"
+version = "0.1.1"
 source = { editable = "PixivServerCommon" }
 dependencies = [
     { name = "pydantic" },

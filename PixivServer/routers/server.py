@@ -1,6 +1,7 @@
 import logging
 from fastapi import APIRouter, Response
 
+from pixivutil_server_common.models import UpdateCookieRequest
 from PixivServer.service import pixiv
 
 logger = logging.getLogger('uvicorn.pixivutil')
@@ -17,11 +18,12 @@ async def get_cookie() -> Response:
         status_code=200,
     )
 
-@router.put("/cookie/{cookie}")
-async def update_cookie(cookie: str) -> Response:
+@router.put("/cookie")
+async def update_cookie(request: UpdateCookieRequest) -> Response:
     """
     Update (and validate) cookie.
     """
+    cookie = request.cookie
     is_success = pixiv.service.update_pixiv_cookie(cookie)
     if not is_success:
         return Response(
@@ -32,6 +34,14 @@ async def update_cookie(cookie: str) -> Response:
         content=cookie,
         status_code=200,
     )
+
+
+@router.put("/cookie/{cookie}", deprecated=True)
+async def update_cookie_deprecated(cookie: str) -> Response:
+    """
+    Deprecated: update cookie via URL path.
+    """
+    return await update_cookie(UpdateCookieRequest(cookie=cookie))
 
 @router.delete("/database")
 async def reset_database() -> Response:
