@@ -17,6 +17,10 @@ class QueueTaskResponse(BaseModel):
     member_name: str | None = None
 
 
+class UpdateCookieRequest(BaseModel):
+    cookie: str
+
+
 class PixivMasterMember(BaseModel):
     member_id: int
     name: str

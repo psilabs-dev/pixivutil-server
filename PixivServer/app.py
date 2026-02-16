@@ -44,7 +44,7 @@ auth_dependency = [Depends(PixivServer.auth.is_valid_api_key_header)]
 
 app.include_router(
     PixivServer.routers.health.router,
-    prefix="/api/health"
+    prefix="/api/health",
 )
 app.include_router(
     PixivServer.routers.metadata_queue.router,
