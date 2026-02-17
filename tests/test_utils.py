@@ -1,6 +1,6 @@
 import pytest
 
-from PixivServer.utils import get_version, clear_folder, is_valid_date
+from PixivServer.utils import clear_folder, get_version, is_valid_date
 
 
 def test_get_version():

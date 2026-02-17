@@ -4,6 +4,7 @@ import urllib.parse
 from celery.result import AsyncResult
 from fastapi import APIRouter
 from fastapi.responses import JSONResponse
+from pixivutil_server_common.models import TagMetadataFilterMode
 
 from PixivServer.models.pixiv_worker import (
     DownloadArtworkMetadataByIdRequest,
@@ -17,7 +18,6 @@ from PixivServer.worker import (
     download_series_metadata_by_id,
     download_tag_metadata_by_id,
 )
-from pixivutil_server_common.models import TagMetadataFilterMode
 
 logger = logging.getLogger("uvicorn.pixivutil")
 router = APIRouter()

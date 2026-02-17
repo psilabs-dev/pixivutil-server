@@ -37,7 +37,7 @@ class PixivAsyncClient:
         self._session = session
         self._owns_session = session is None
 
-    async def __aenter__(self) -> "PixivAsyncClient":
+    async def __aenter__(self) -> PixivAsyncClient:
         await self._ensure_session()
         return self
 

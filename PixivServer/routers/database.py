@@ -1,8 +1,9 @@
+import json
 import logging
 import sqlite3
+
 from fastapi import APIRouter, Response
 from fastapi.encoders import jsonable_encoder
-import json
 
 from PixivServer.repository.pixivutil import PixivUtilRepository
 

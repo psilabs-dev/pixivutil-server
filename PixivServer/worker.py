@@ -1,20 +1,22 @@
+import logging
 import random
 import time
 import traceback
+
 from celery import Celery
 from celery.signals import setup_logging, worker_init, worker_shutdown
-import logging
 
 import PixivServer
+
 # from PixivServer.config.worker import config as worker_config
 import PixivServer.service
 import PixivServer.service.pixiv
 from PixivServer.models.pixiv_worker import (
     DeleteArtworkByIdRequest,
     DownloadArtworkByIdRequest,
+    DownloadArtworkMetadataByIdRequest,
     DownloadArtworksByMemberIdRequest,
     DownloadArtworksByTagsRequest,
-    DownloadArtworkMetadataByIdRequest,
     DownloadMemberMetadataByIdRequest,
     DownloadSeriesMetadataByIdRequest,
     DownloadTagMetadataByIdRequest,

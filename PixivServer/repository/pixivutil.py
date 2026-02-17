@@ -3,19 +3,19 @@ import sqlite3
 
 from PixivServer.config.pixivutil import config as pixivutil_config
 from PixivServer.models.pixiv_metadata import (
-    PixivMemberPortfolio,
-    PixivImageComplete,
-    PixivMasterMember,
-    PixivMasterImage,
-    PixivMangaImage,
-    PixivMasterTag,
-    PixivTagTranslation,
-    PixivImageToTag,
-    PixivMasterSeries,
-    PixivImageToSeries,
     PixivDateInfo,
+    PixivImageComplete,
+    PixivImageToSeries,
+    PixivImageToTag,
+    PixivMangaImage,
+    PixivMasterImage,
+    PixivMasterMember,
+    PixivMasterSeries,
+    PixivMasterTag,
+    PixivMemberPortfolio,
+    PixivSeriesInfo,
     PixivTagInfo,
-    PixivSeriesInfo
+    PixivTagTranslation,
 )
 
 logger = logging.getLogger(__name__)

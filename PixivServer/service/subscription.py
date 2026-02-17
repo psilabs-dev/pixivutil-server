@@ -1,9 +1,9 @@
 import logging
 import time
 
-from PixivServer.service.pixiv import service as pixiv_service
-from PixivServer.repository.subscription import SubscriptionRepository
 from PixivServer.repository.pixivutil import PixivUtilRepository
+from PixivServer.repository.subscription import SubscriptionRepository
+from PixivServer.service.pixiv import service as pixiv_service
 
 logger = logging.getLogger(__name__)
 

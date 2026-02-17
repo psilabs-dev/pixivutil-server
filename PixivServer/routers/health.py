@@ -1,4 +1,5 @@
 import logging
+
 from fastapi import APIRouter, Depends, Response
 
 import PixivServer.auth
@@ -23,7 +24,7 @@ async def pixiv_health_check(
 
     cookie = pixiv.service.get_pixiv_cookie()
     pixiv_cookie_is_valid = pixiv.service.login_pixiv(cookie)
-    
+
     if not pixiv_cookie_is_valid:
         return Response(
             content="Pixiv login failed.",

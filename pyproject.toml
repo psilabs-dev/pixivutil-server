@@ -41,6 +41,14 @@ exclude = [
   "PixivUtil2/*"
 ]
 
+[tool.ruff.lint]
+select = ["A", "BLE", "F", "W", "E", "I", "UP", "C4", "FA", "ISC", "ICN", "SIM", "NPY"]
+extend-select = ["ASYNC", "C4", "SIM"]
+ignore = ["E501"]
+
+[tool.ruff.lint.per-file-ignores]
+"__init__.py" = ["F401"]
+
 [tool.uv.build-backend]
 module-name = "PixivServer"
 module-root = ""

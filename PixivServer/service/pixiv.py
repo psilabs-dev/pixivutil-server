@@ -1,36 +1,34 @@
+import logging
 import os
 import sqlite3
 import sys
 import traceback
 
-import logging
-
 sys.path.append('PixivUtil2')
 
+from PixivServer.config.pixivutil import config as pixivutil_config
 from PixivServer.models.pixiv_worker import (
     DeleteArtworkByIdRequest,
     DownloadArtworkByIdRequest,
+    DownloadArtworkMetadataByIdRequest,
     DownloadArtworksByMemberIdRequest,
     DownloadArtworksByTagsRequest,
-    DownloadArtworkMetadataByIdRequest,
     DownloadMemberMetadataByIdRequest,
     DownloadSeriesMetadataByIdRequest,
     DownloadTagMetadataByIdRequest,
 )
+from PixivServer.utils import clear_folder
 from PixivUtil2 import (
-    PixivConfig, 
-    PixivBrowserFactory, 
-    PixivHelper, 
-    PixivImageHandler, 
-    PixivArtistHandler, 
-    PixivDBManager, 
-    PixivTagsHandler, 
-    PixivException, 
+    PixivArtistHandler,
+    PixivBrowserFactory,
+    PixivConfig,
+    PixivDBManager,
+    PixivException,
+    PixivHelper,
+    PixivImageHandler,
+    PixivTagsHandler,
     set_console_title,  # noqa: F401,
 )
-
-from PixivServer.config.pixivutil import config as pixivutil_config
-from PixivServer.utils import clear_folder
 
 logger = logging.getLogger(__name__)
 
@@ -88,7 +86,7 @@ class PixivUtilService:
 
     def load_environment_variables(self):
         "environment variable configuration"
-        
+
         if pixivutil_config.cookie:
             __config__.cookie = pixivutil_config.cookie
 
@@ -99,7 +97,7 @@ class PixivUtilService:
         global __br__
         global __config__
         global __dbManager__
-        global __log__        
+        global __log__
         # download control
         if not os.path.exists(configfile):
             os.makedirs(os.path.dirname(configfile), exist_ok=True)
@@ -114,7 +112,7 @@ class PixivUtilService:
         # setup database
         os.makedirs(os.path.dirname(__config__.dbPath), exist_ok=True)
         self.open_database()
-        
+
         if __br__ is None:
             __br__ = PixivBrowserFactory.getBrowser(config=__config__)
 
@@ -169,7 +167,7 @@ class PixivUtilService:
 
     def get_pixiv_cookie(self):
         return __config__.cookie
-    
+
     def update_pixiv_cookie(self, new_cookie: str) -> bool:
         __config__.cookie = new_cookie
         __config__.writeConfig(path=configfile)
@@ -186,7 +184,7 @@ class PixivUtilService:
     def get_member_name(self, member_id: int) -> str:
         data = self.get_member_data(member_id)[0]
         return data.artistName
-    
+
     def get_artwork_name(self, artwork_id: int) -> str:
         data, response = self.get_artwork_data(artwork_id)
         if data is None:

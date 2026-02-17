@@ -1,5 +1,6 @@
 import os
 
+
 class RabbitConfig:
 
     def __init__(self):

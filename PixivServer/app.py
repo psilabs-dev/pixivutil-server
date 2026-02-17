@@ -1,9 +1,9 @@
-from contextlib import asynccontextmanager
-import traceback
-from PixivServer.utils import get_version
-from fastapi import Depends, FastAPI, Response
 import logging
 import time
+import traceback
+from contextlib import asynccontextmanager
+
+from fastapi import Depends, FastAPI, Response
 
 import PixivServer
 import PixivServer.auth
@@ -13,9 +13,11 @@ import PixivServer.routers.download_queue
 import PixivServer.routers.health
 import PixivServer.routers.metadata_queue
 import PixivServer.routers.server
+
 # import PixivServer.routers.subscription
 import PixivServer.service
 import PixivServer.service.pixiv
+from PixivServer.utils import get_version
 
 logger = logging.getLogger('uvicorn.pixivutil')
 
