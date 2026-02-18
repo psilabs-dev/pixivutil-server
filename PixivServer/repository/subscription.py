@@ -149,7 +149,7 @@ class SubscriptionRepository:
         try:
             c = self.connection.cursor()
             c.execute(
-                '''INSERT INTO pixiv_server_tag_subscription (tag_id, bookmark_count, created_date, last_modified_date) 
+                '''INSERT INTO pixiv_server_tag_subscription (tag_id, bookmark_count, created_date, last_modified_date)
                 VALUES(?, ?, datetime('now'), datetime('now'))
                 ON CONFLICT(tag_id)
                 DO UPDATE SET

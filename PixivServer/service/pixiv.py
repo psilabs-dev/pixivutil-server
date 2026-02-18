@@ -38,12 +38,12 @@ __config__ = PixivConfig.PixivConfig()
 configfile = ".pixivUtil2/conf/config.ini"
 __dbManager__ = None
 __br__: PixivBrowserFactory.PixivBrowser = None
-__blacklistTags = list()
-__suppressTags = list()
+__blacklistTags = []
+__suppressTags = []
 __log__ = None
-__errorList = list()
-__blacklistMembers = list()
-__blacklistTitles = list()
+__errorList = []
+__blacklistMembers = []
+__blacklistTitles = []
 __valid_options = ()
 __seriesDownloaded = []
 
