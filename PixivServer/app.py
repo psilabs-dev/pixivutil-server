@@ -34,6 +34,7 @@ from PixivServer.metrics import (
     DB_ARTWORKS,
     DB_MEMBERS,
     DB_PAGES,
+    DB_SERIES,
     DB_TAGS,
     DISK_DATABASE_BYTES,
     DISK_DOWNLOADS_BYTES,
@@ -79,6 +80,7 @@ def _collect_db_stats() -> None:
         DB_ARTWORKS.set(repo.count_artworks())
         DB_PAGES.set(repo.count_pages())
         DB_TAGS.set(repo.count_tags())
+        DB_SERIES.set(repo.count_series())
     finally:
         repo.close()
 

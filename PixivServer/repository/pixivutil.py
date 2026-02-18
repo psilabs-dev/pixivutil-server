@@ -140,6 +140,14 @@ class PixivUtilRepository:
         finally:
             cursor.close()
 
+    def count_series(self) -> int:
+        cursor = self.connection.cursor()
+        try:
+            cursor.execute("SELECT COUNT(*) FROM pixiv_master_series")
+            return cursor.fetchone()[0]
+        finally:
+            cursor.close()
+
     def get_all_pixiv_member_ids(self) -> list[int]:
         """
         Get all member IDs from the database.

@@ -8,6 +8,7 @@ DB_MEMBERS = Gauge("pixivutil_db_members_total", "Members in pixiv_master_member
 DB_ARTWORKS = Gauge("pixivutil_db_artworks_total", "Artworks in pixiv_master_image")
 DB_PAGES = Gauge("pixivutil_db_pages_total", "Pages in pixiv_manga_image")
 DB_TAGS = Gauge("pixivutil_db_tags_total", "Tags in pixiv_master_tag")
+DB_SERIES = Gauge("pixivutil_db_series_total", "Series in pixiv_master_series")
 
 # --- Disk metrics (periodic) ---
 DISK_DOWNLOADS_BYTES = Gauge("pixivutil_disk_downloads_bytes", "Bytes used by downloads directory")
