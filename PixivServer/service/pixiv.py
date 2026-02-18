@@ -3,6 +3,7 @@ import os
 import sqlite3
 import sys
 import traceback
+from urllib.error import HTTPError
 
 sys.path.append('PixivUtil2')
 
@@ -159,10 +160,10 @@ class PixivUtilService:
         result = False
         try:
             result = __br__.loginUsingCookie(login_cookie=cookie)
-        except BaseException:
+        except (HTTPError, PixivException, AssertionError, ValueError) as e:
             logger.error(f'Error at doLogin(): {sys.exc_info()}')
             logger.error(traceback.format_exc())
-            raise PixivException("Cannot Login!", PixivException.CANNOT_LOGIN)
+            raise PixivException("Cannot Login!", PixivException.CANNOT_LOGIN) from e
         return result
 
     def get_pixiv_cookie(self):

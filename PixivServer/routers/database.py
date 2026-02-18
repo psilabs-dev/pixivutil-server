@@ -32,10 +32,10 @@ def get_all_pixiv_member_ids() -> Response:
             content="Database error occurred.",
             status_code=500,
         )
-    except Exception as e:
-        logger.error(f"Unexpected error while getting all member IDs: {e}")
+    except (TypeError, ValueError, RecursionError) as e:
+        logger.error(f"Serialization error while getting all member IDs: {e}")
         return Response(
-            content="An unexpected error occurred.",
+            content="Response serialization error occurred.",
             status_code=500,
         )
     finally:
@@ -63,10 +63,10 @@ def get_all_pixiv_image_ids() -> Response:
             content="Database error occurred.",
             status_code=500,
         )
-    except Exception as e:
-        logger.error(f"Unexpected error while getting all image IDs: {e}")
+    except (TypeError, ValueError, RecursionError) as e:
+        logger.error(f"Serialization error while getting all image IDs: {e}")
         return Response(
-            content="An unexpected error occurred.",
+            content="Response serialization error occurred.",
             status_code=500,
         )
     finally:
@@ -94,10 +94,10 @@ def get_all_pixiv_tags() -> Response:
             content="Database error occurred.",
             status_code=500,
         )
-    except Exception as e:
-        logger.error(f"Unexpected error while getting all tag IDs: {e}")
+    except (TypeError, ValueError, RecursionError) as e:
+        logger.error(f"Serialization error while getting all tag IDs: {e}")
         return Response(
-            content="An unexpected error occurred.",
+            content="Response serialization error occurred.",
             status_code=500,
         )
     finally:
@@ -125,10 +125,10 @@ def get_all_pixiv_series() -> Response:
             content="Database error occurred.",
             status_code=500,
         )
-    except Exception as e:
-        logger.error(f"Unexpected error while getting all series IDs: {e}")
+    except (TypeError, ValueError, RecursionError) as e:
+        logger.error(f"Serialization error while getting all series IDs: {e}")
         return Response(
-            content="An unexpected error occurred.",
+            content="Response serialization error occurred.",
             status_code=500,
         )
     finally:
@@ -162,10 +162,10 @@ def get_pixiv_tag_info_by_id(tag_id: str) -> Response:
             content="Database error occurred.",
             status_code=500,
         )
-    except Exception as e:
-        logger.error(f"Unexpected error while getting tag {tag_id}: {e}")
+    except (TypeError, ValueError, RecursionError) as e:
+        logger.error(f"Serialization error while getting tag {tag_id}: {e}")
         return Response(
-            content="An unexpected error occurred.",
+            content="Response serialization error occurred.",
             status_code=500,
         )
     finally:
@@ -199,10 +199,10 @@ def get_pixiv_series_info_by_id(series_id: str) -> Response:
             content="Database error occurred.",
             status_code=500,
         )
-    except Exception as e:
-        logger.error(f"Unexpected error while getting series {series_id}: {e}")
+    except (TypeError, ValueError, RecursionError) as e:
+        logger.error(f"Serialization error while getting series {series_id}: {e}")
         return Response(
-            content="An unexpected error occurred.",
+            content="Response serialization error occurred.",
             status_code=500,
         )
     finally:
@@ -248,10 +248,10 @@ def get_pixiv_member_portfolio_by_id(member_id: str | None) -> Response:
             content="Database error occurred.",
             status_code=500,
         )
-    except Exception as e:
-        logger.error(f"Unexpected error while getting member {member_id}: {e}")
+    except (TypeError, ValueError, RecursionError) as e:
+        logger.error(f"Serialization error while getting member {member_id}: {e}")
         return Response(
-            content="An unexpected error occurred.",
+            content="Response serialization error occurred.",
             status_code=500,
         )
     finally:
@@ -297,10 +297,10 @@ def get_pixiv_image_data_by_id(image_id: str | None) -> Response:
             content="Database error occurred.",
             status_code=500,
         )
-    except Exception as e:
-        logger.error(f"Unexpected error while getting image {image_id}: {e}")
+    except (TypeError, ValueError, RecursionError) as e:
+        logger.error(f"Serialization error while getting image {image_id}: {e}")
         return Response(
-            content="An unexpected error occurred.",
+            content="Response serialization error occurred.",
             status_code=500,
         )
     finally:
