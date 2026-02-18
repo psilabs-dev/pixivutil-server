@@ -155,7 +155,7 @@ async def lifespan(_: FastAPI):
     try:
         logger.info("Setting up server.")
         # startup actions
-        asyncio.sleep(5)
+        await asyncio.sleep(5)
         PixivServer.service.pixiv.service.open(validate_pixiv_login=False)
         SERVER_INFO.info({"version": get_version()})
         # PixivServer.service.subscription_service.open()
