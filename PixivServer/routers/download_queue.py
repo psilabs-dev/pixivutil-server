@@ -1,17 +1,28 @@
-from datetime import timedelta
 import datetime
-import sqlite3
-from celery.result import AsyncResult
 import logging
+import sqlite3
+import urllib.parse
+from datetime import timedelta
+
+from celery.result import AsyncResult
 from fastapi import APIRouter, Response
 from fastapi.responses import JSONResponse
-import urllib.parse
-
-from PixivServer.repository.pixivutil import PixivUtilRepository
-from PixivServer.worker import delete_artwork_by_id, download_artworks_by_id, download_artworks_by_member_id, download_artworks_by_tag
-from PixivServer.models.pixiv_worker import DeleteArtworkByIdRequest, DownloadArtworkByIdRequest, DownloadArtworksByMemberIdRequest, DownloadArtworksByTagsRequest
-from PixivServer.utils import is_valid_date
 from pixivutil_server_common.models import TagSortOrder, TagTypeMode
+
+from PixivServer.models.pixiv_worker import (
+    DeleteArtworkByIdRequest,
+    DownloadArtworkByIdRequest,
+    DownloadArtworksByMemberIdRequest,
+    DownloadArtworksByTagsRequest,
+)
+from PixivServer.repository.pixivutil import PixivUtilRepository
+from PixivServer.utils import is_valid_date
+from PixivServer.worker import (
+    delete_artwork_by_id,
+    download_artworks_by_id,
+    download_artworks_by_member_id,
+    download_artworks_by_tag,
+)
 
 logger = logging.getLogger('uvicorn.pixivutil')
 router = APIRouter()
@@ -79,7 +90,7 @@ async def queue_download_artworks_by_member_id(member_id: str) -> Response:
 
 @router.post("/tag/{tag_name}")
 async def queue_download_artworks_by_tag(
-    tag_name: str, 
+    tag_name: str,
     bookmark_count: int | None = None,
     sort_order: TagSortOrder = 'date_d',
     type_mode: TagTypeMode = 'a',

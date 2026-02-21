@@ -2,8 +2,12 @@
 Model layer for PixivUtil worker queue processing interface.
 """
 
+from pixivutil_server_common.models import (
+    TagMetadataFilterMode,
+    TagSortOrder,
+    TagTypeMode,
+)
 from pydantic import BaseModel
-from pixivutil_server_common.models import TagMetadataFilterMode, TagSortOrder, TagTypeMode
 
 
 class DownloadArtworkByIdRequest(BaseModel):

@@ -1,9 +1,9 @@
 import logging
 import time
 
-from PixivServer.service.pixiv import service as pixiv_service
-from PixivServer.repository.subscription import SubscriptionRepository
 from PixivServer.repository.pixivutil import PixivUtilRepository
+from PixivServer.repository.subscription import SubscriptionRepository
+from PixivServer.service.pixiv import service as pixiv_service
 
 logger = logging.getLogger(__name__)
 
@@ -40,13 +40,13 @@ class SubscriptionService:
         subscribed_members = self.get_subscribed_members()
 
         num_new_artworks = 0
-        new_artwork_titles_by_member_id = dict()
+        new_artwork_titles_by_member_id = {}
 
         for member in subscribed_members:
             member_id, member_name = member[0], member[1]
             image_id_list = self.pixivutil_db.select_image_id_list_by_member_id(member_id)
             if not image_id_list:
-                image_id_list = list()
+                image_id_list = []
 
             image_id_pool = set(image_id_list)
             member_data = pixiv_service.get_member_data(member_id)[0]
@@ -62,7 +62,7 @@ class SubscriptionService:
                 if image_id not in image_id_pool:
                     print(f'Image id {image_id} is not in {image_id_pool}')
                     if member_name not in new_artwork_titles_by_member_id:
-                        new_artwork_titles_by_member_id[member_name] = list()
+                        new_artwork_titles_by_member_id[member_name] = []
                     new_artwork_titles_by_member_id[member_name].append(image_id)
                     pixiv_service.download_artwork_by_id(image_id)
                     num_new_artworks += 1
@@ -76,7 +76,7 @@ class SubscriptionService:
         subscribed_members = self.subscription_db.select_member_subscriptions()
         if subscribed_members is None:
             logger.error("Failed to get member subscriptions.")
-            return list()
+            return []
         return subscribed_members
 
     def add_member_subscription(self, member_id: str) -> dict[str, str]:
@@ -120,14 +120,14 @@ class SubscriptionService:
             }
         else:
             logger.info(f"Subscription for member ID {member_id} does not exist.")
-            return dict()
+            return {}
 
     def get_subscribed_tags(self) -> list[tuple[str]]:
         logger.info("Getting tags subscribed to.")
         subscribed_tags = self.subscription_db.select_tag_subscriptions()
         if subscribed_tags is None:
             logger.error("Failed to get tag subscriptions.")
-            return list()
+            return []
         return subscribed_tags
 
     def add_tag_subscription(self, tag_id: str, bookmark_count: int) -> dict[str, str]:
@@ -145,6 +145,6 @@ class SubscriptionService:
             }
         else:
             logger.info(f"Subscription for tag ID {tag_id} does not exist.")
-            return dict()
+            return {}
 
 service = SubscriptionService()

@@ -3,19 +3,19 @@ import sqlite3
 
 from PixivServer.config.pixivutil import config as pixivutil_config
 from PixivServer.models.pixiv_metadata import (
-    PixivMemberPortfolio,
-    PixivImageComplete,
-    PixivMasterMember,
-    PixivMasterImage,
-    PixivMangaImage,
-    PixivMasterTag,
-    PixivTagTranslation,
-    PixivImageToTag,
-    PixivMasterSeries,
-    PixivImageToSeries,
     PixivDateInfo,
+    PixivImageComplete,
+    PixivImageToSeries,
+    PixivImageToTag,
+    PixivMangaImage,
+    PixivMasterImage,
+    PixivMasterMember,
+    PixivMasterSeries,
+    PixivMasterTag,
+    PixivMemberPortfolio,
+    PixivSeriesInfo,
     PixivTagInfo,
-    PixivSeriesInfo
+    PixivTagTranslation,
 )
 
 logger = logging.getLogger(__name__)
@@ -107,6 +107,46 @@ class PixivUtilRepository:
         finally:
             if cursor:
                 cursor.close()
+
+    def count_members(self) -> int:
+        cursor = self.connection.cursor()
+        try:
+            cursor.execute("SELECT COUNT(*) FROM pixiv_master_member")
+            return cursor.fetchone()[0]
+        finally:
+            cursor.close()
+
+    def count_artworks(self) -> int:
+        cursor = self.connection.cursor()
+        try:
+            cursor.execute("SELECT COUNT(*) FROM pixiv_master_image")
+            return cursor.fetchone()[0]
+        finally:
+            cursor.close()
+
+    def count_pages(self) -> int:
+        cursor = self.connection.cursor()
+        try:
+            cursor.execute("SELECT COUNT(*) FROM pixiv_manga_image")
+            return cursor.fetchone()[0]
+        finally:
+            cursor.close()
+
+    def count_tags(self) -> int:
+        cursor = self.connection.cursor()
+        try:
+            cursor.execute("SELECT COUNT(*) FROM pixiv_master_tag")
+            return cursor.fetchone()[0]
+        finally:
+            cursor.close()
+
+    def count_series(self) -> int:
+        cursor = self.connection.cursor()
+        try:
+            cursor.execute("SELECT COUNT(*) FROM pixiv_master_series")
+            return cursor.fetchone()[0]
+        finally:
+            cursor.close()
 
     def get_all_pixiv_member_ids(self) -> list[int]:
         """

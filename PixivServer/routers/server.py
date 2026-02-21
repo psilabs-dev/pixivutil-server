@@ -1,7 +1,8 @@
 import logging
-from fastapi import APIRouter, Response
 
+from fastapi import APIRouter, Response
 from pixivutil_server_common.models import UpdateCookieRequest
+
 from PixivServer.service import pixiv
 
 logger = logging.getLogger('uvicorn.pixivutil')

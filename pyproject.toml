@@ -17,6 +17,8 @@ dependencies = [
   "celery>=5.5.3",
   "fastapi>=0.122.0",
   "pixivutil-server-common>=0.1.0",
+  "prometheus-client>=0.24.1",
+  "psutil>=7.2.2",
   "uvicorn[standard]>=0.38.0",
 ]
 
@@ -36,10 +38,24 @@ pixivutil2 = [
   "pysocks>=1.7.1",
 ]
 
+[tool.pyright]
+pythonVersion = "3.12"
+include = ["PixivServer", "PixivServerCommon", "PixivUtilClient", "tests"]
+exclude = ["PixivUtil2"]
+reportUnusedCoroutine = "error"
+
 [tool.ruff]
 exclude = [
   "PixivUtil2/*"
 ]
+
+[tool.ruff.lint]
+select = ["A", "BLE", "F", "W", "E", "I", "UP", "C4", "FA", "ISC", "ICN", "SIM", "NPY"]
+extend-select = ["ASYNC", "C4", "SIM"]
+ignore = ["E501"]
+
+[tool.ruff.lint.per-file-ignores]
+"__init__.py" = ["F401"]
 
 [tool.uv.build-backend]
 module-name = "PixivServer"
@@ -56,6 +72,7 @@ pixivutil-server-common = { workspace = true }
 
 [dependency-groups]
 dev = [
+    "pyright>=1.1.408",
     "pytest>=9.0.2",
     "pytest-asyncio>=1.3.0",
     "ruff>=0.15.1",

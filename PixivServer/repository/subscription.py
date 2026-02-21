@@ -10,11 +10,11 @@ class SubscriptionRepository:
     def __init__(self):
         self.db_path = pixivutil_config.db_path
         self.connection: sqlite3.Connection = None
-    
+
     def open(self):
         self.connection = sqlite3.connect(self.db_path)
         self.create_table()
-        
+
     def create_table(self):
         c = self.connection.cursor()
         c.execute('''
@@ -96,7 +96,7 @@ class SubscriptionRepository:
         finally:
             c.close()
         return True
-    
+
     def remove_member_subscription(self, member_id: int) -> bool:
         try:
             c = self.connection.cursor()
@@ -142,14 +142,14 @@ class SubscriptionRepository:
             raise e
         finally:
             c.close()
-        
+
         return results
 
     def add_tag_subscription(self, tag_id: str, bookmark_count: int) -> bool:
         try:
             c = self.connection.cursor()
             c.execute(
-                '''INSERT INTO pixiv_server_tag_subscription (tag_id, bookmark_count, created_date, last_modified_date) 
+                '''INSERT INTO pixiv_server_tag_subscription (tag_id, bookmark_count, created_date, last_modified_date)
                 VALUES(?, ?, datetime('now'), datetime('now'))
                 ON CONFLICT(tag_id)
                 DO UPDATE SET

@@ -1,5 +1,6 @@
 import os
 
+
 class PixivUtilConfig:
 
     def __init__(self):
