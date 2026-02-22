@@ -896,7 +896,7 @@ wheels = [
 
 [[package]]
 name = "pixivutil-server"
-version = "2.4.3"
+version = "2.4.4"
 source = { editable = "." }
 dependencies = [
     { name = "aiofiles" },
