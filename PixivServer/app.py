@@ -122,6 +122,14 @@ app.include_router(
 #     prefix="/api/subscription"
 # )
 
+if server_config.server_env == 'development':
+    import PixivServer.routers.dev
+    app.include_router(
+        PixivServer.routers.dev.router,
+        prefix="/api/dev",
+        dependencies=auth_dependency,
+    )
+
 
 @app.get("/")
 async def info():

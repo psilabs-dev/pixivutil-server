@@ -17,7 +17,7 @@ from PixivServer.models.pixiv_worker import (
 )
 from PixivServer.repository.pixivutil import PixivUtilRepository
 from PixivServer.utils import is_valid_date
-from PixivServer.worker import (
+from PixivServer.worker.download import (
     delete_artwork_by_id,
     download_artworks_by_id,
     download_artworks_by_member_id,
