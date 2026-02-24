@@ -40,7 +40,7 @@ pixivutil2 = [
 
 [tool.pyright]
 pythonVersion = "3.12"
-include = ["PixivServer", "PixivServerCommon", "PixivUtilClient", "tests"]
+include = ["PixivServer", "PixivServerCommon", "PixivUtilClient", "tests", "integration_tests"]
 exclude = [
   "PixivUtil2",
   "**/node_modules",
