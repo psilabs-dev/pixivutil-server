@@ -1,3 +1,7 @@
+import pytest
+
+
+@pytest.mark.pixiv_api
 def test_dlq_resume_replays_native_celery_message(clean_env):
     task = clean_env.api_json("POST", "/api/dev/artwork/424242")
     task_id = task["task_id"]
@@ -26,6 +30,7 @@ def test_dlq_resume_replays_native_celery_message(clean_env):
     assert clean_env.api_json("GET", "/api/queue/dead-letter/") == []
 
 
+@pytest.mark.pixiv_api
 def test_dlq_resume_all_replays_multiple_native_celery_messages(clean_env):
     task_a = clean_env.api_json("POST", "/api/dev/artwork/111111")
     task_b = clean_env.api_json("POST", "/api/dev/artwork/222222")

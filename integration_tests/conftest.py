@@ -14,6 +14,31 @@ AUTH_HEADER = ("Authorization", "Bearer pixiv")
 DEV_SUCCESS_SENTINEL = "/tmp/pixivutil-dev-dlq-success.flag" # TODO: this requires a redesign.
 
 
+def pytest_addoption(parser: pytest.Parser):
+    parser.addoption(
+        "--pixiv-api",
+        action="store_true",
+        default=False,
+        help="Run tests that make Pixiv API calls.",
+    )
+
+
+def pytest_configure(config: pytest.Config):
+    config.addinivalue_line(
+        "markers",
+        "pixiv_api: test performs Pixiv API calls and is skipped unless --pixiv-api is provided.",
+    )
+
+
+def pytest_collection_modifyitems(config: pytest.Config, items: list[pytest.Item]):
+    if config.getoption("--pixiv-api"):
+        return
+    skip_pixiv_api = pytest.mark.skip(reason="need --pixiv-api option enabled")
+    for item in items:
+        if "pixiv_api" in item.keywords:
+            item.add_marker(skip_pixiv_api)
+
+
 def _run(
     args: list[str],
     *,
@@ -134,12 +159,9 @@ class ComposeTestEnv:
         )
 
 
-def pytest_sessionstart(session: pytest.Session) -> None:
-    _require_docker_tools()
-
-
 @pytest.fixture(scope="session")
 def compose_env() -> ComposeTestEnv:
+    _require_docker_tools()
     env = ComposeTestEnv()
     env.compose("down", "--volumes", check=False, timeout=180)
     env.compose("up", "--build", "-d", timeout=600)
