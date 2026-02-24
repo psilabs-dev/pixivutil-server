@@ -17,4 +17,12 @@ def test_main_queue_declares_dead_letter_exchange():
     assert "pixivutil-queue" in queues
     assert queues["pixivutil-queue"].queue_arguments == {
         "x-dead-letter-exchange": "pixivutil-dlx",
+        "x-max-priority": 3,
     }
+
+
+def test_worker_prefetch_multiplier_is_one_for_priority_fairness():
+    app = Celery("pixivutil-test")
+    app.config_from_object("PixivServer.config.celery")
+
+    assert app.conf.worker_prefetch_multiplier == 1

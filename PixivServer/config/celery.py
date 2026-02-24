@@ -17,7 +17,10 @@ CELERY_QUEUES = (
         exchange=default_exchange,
         routing_key='pixivutil-queue',
         durable=True,
-        queue_arguments={'x-dead-letter-exchange': 'pixivutil-dlx'},
+        queue_arguments={
+            'x-dead-letter-exchange': 'pixivutil-dlx',
+            'x-max-priority': 3,
+        },
     ),
 )
 
@@ -26,3 +29,7 @@ CELERY_ACKS_LATE = True
 CELERY_TASK_ACKS_LATE = True
 CELERY_ACKS_ON_FAILURE_OR_TIMEOUT = False
 CELERY_TASK_REJECT_ON_WORKER_LOST = True
+
+# Keep broker-side queue priority behavior observable with a single worker.
+# Without this, Celery can reserve multiple low-priority tasks before later high-priority tasks arrive.
+CELERYD_PREFETCH_MULTIPLIER = 1

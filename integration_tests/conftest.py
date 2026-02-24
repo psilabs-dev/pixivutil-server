@@ -141,12 +141,38 @@ class ComposeTestEnv:
             f"(last_state={last_state}, last_error={last_error})"
         )
 
+    def dev_priority_probe_state(self) -> dict:
+        state = self.api_json("GET", "/api/dev/priority")
+        if not isinstance(state, dict):
+            raise RuntimeError(f"Unexpected dev priority probe payload: {state!r}")
+        return state
+
+    def wait_for_priority_probe_started_count(self, expected: int, timeout: int = 90) -> dict:
+        deadline = time.time() + timeout
+        last_state: dict | None = None
+        while time.time() < deadline:
+            state = self.dev_priority_probe_state()
+            last_state = state
+            started = state.get("started")
+            if isinstance(started, list) and len(started) >= expected:
+                return state
+            time.sleep(0.5)
+        raise RuntimeError(
+            f"Priority probe did not reach started_count>={expected} within {timeout}s (last_state={last_state})"
+        )
+
     def clear_state(self) -> None:
         self.docker_exec(
             "pixivutil-worker",
             "sh",
             "-lc",
-            f"rm -f {DEV_SUCCESS_SENTINEL} /workdir/.pixivUtil2/dev-dlq-task-state.json /workdir/.pixivUtil2/dev-dlq-task-state.tmp",
+            (
+                f"rm -f {DEV_SUCCESS_SENTINEL} "
+                "/workdir/.pixivUtil2/dev-dlq-task-state.json "
+                "/workdir/.pixivUtil2/dev-dlq-task-state.tmp "
+                "/workdir/.pixivUtil2/dev-priority-task-state.json "
+                "/workdir/.pixivUtil2/dev-priority-task-state.tmp"
+            ),
             check=False,
         )
         self.docker_exec(
