@@ -41,8 +41,14 @@ pixivutil2 = [
 [tool.pyright]
 pythonVersion = "3.12"
 include = ["PixivServer", "PixivServerCommon", "PixivUtilClient", "tests"]
-exclude = ["PixivUtil2"]
+exclude = [
+  "PixivUtil2",
+  "**/node_modules",
+  "**/__pycache__",
+  "**/.*", ".venv",
+]
 reportUnusedCoroutine = "error"
+extraPaths = ["PixivUtil2"]
 
 [tool.ruff]
 exclude = [
