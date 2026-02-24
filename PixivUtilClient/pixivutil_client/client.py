@@ -8,6 +8,11 @@ import aiohttp
 
 from pixivutil_client.exceptions import PixivAPIError, PixivTransportError
 from pixivutil_client.models import (
+    DeadLetterDropAllResponse,
+    DeadLetterDropResponse,
+    DeadLetterMessage,
+    DeadLetterResumeAllResponse,
+    DeadLetterResumeResponse,
     PixivImageComplete,
     PixivMemberPortfolio,
     PixivSeriesInfo,
@@ -243,3 +248,25 @@ class PixivAsyncClient:
     async def reset_downloads(self) -> str:
         payload = await self._request("DELETE", "/api/server/downloads")
         return str(payload)
+
+    async def list_dead_letter_messages(self) -> list[DeadLetterMessage]:
+        payload = await self._request("GET", "/api/queue/dead-letter/")
+        return [DeadLetterMessage.model_validate(item) for item in payload]
+
+    async def resume_all_dead_letter_messages(self) -> DeadLetterResumeAllResponse:
+        payload = await self._request("POST", "/api/queue/dead-letter/resume")
+        return DeadLetterResumeAllResponse.model_validate(payload)
+
+    async def resume_dead_letter_message(self, dead_letter_id: str) -> DeadLetterResumeResponse:
+        encoded_dead_letter_id = quote(dead_letter_id, safe="")
+        payload = await self._request("POST", f"/api/queue/dead-letter/{encoded_dead_letter_id}/resume")
+        return DeadLetterResumeResponse.model_validate(payload)
+
+    async def drop_all_dead_letter_messages(self) -> DeadLetterDropAllResponse:
+        payload = await self._request("DELETE", "/api/queue/dead-letter/")
+        return DeadLetterDropAllResponse.model_validate(payload)
+
+    async def drop_dead_letter_message(self, dead_letter_id: str) -> DeadLetterDropResponse:
+        encoded_dead_letter_id = quote(dead_letter_id, safe="")
+        payload = await self._request("DELETE", f"/api/queue/dead-letter/{encoded_dead_letter_id}")
+        return DeadLetterDropResponse.model_validate(payload)

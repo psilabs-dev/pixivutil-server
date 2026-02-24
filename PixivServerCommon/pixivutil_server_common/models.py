@@ -11,6 +11,25 @@ class DeadLetterMessage(BaseModel):
     payload: dict
 
 
+class DeadLetterResumeAllResponse(BaseModel):
+    requeued: int
+
+
+class DeadLetterResumeResponse(BaseModel):
+    dead_letter_id: str
+    requeued: bool
+    task_name: str
+
+
+class DeadLetterDropAllResponse(BaseModel):
+    dropped: int
+
+
+class DeadLetterDropResponse(BaseModel):
+    dead_letter_id: str
+    dropped: bool
+
+
 class QueueTaskResponse(BaseModel):
     task_id: str
     artwork_id: str | int | None = None

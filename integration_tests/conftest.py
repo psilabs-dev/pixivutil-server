@@ -13,32 +13,6 @@ BASE_URL = "http://localhost:8000"
 AUTH_HEADER = ("Authorization", "Bearer pixiv")
 DEV_SUCCESS_SENTINEL = "/tmp/pixivutil-dev-dlq-success.flag" # TODO: this requires a redesign.
 
-
-def pytest_addoption(parser: pytest.Parser):
-    parser.addoption(
-        "--pixiv-api",
-        action="store_true",
-        default=False,
-        help="Run tests that make Pixiv API calls.",
-    )
-
-
-def pytest_configure(config: pytest.Config):
-    config.addinivalue_line(
-        "markers",
-        "pixiv_api: test performs Pixiv API calls and is skipped unless --pixiv-api is provided.",
-    )
-
-
-def pytest_collection_modifyitems(config: pytest.Config, items: list[pytest.Item]):
-    if config.getoption("--pixiv-api"):
-        return
-    skip_pixiv_api = pytest.mark.skip(reason="need --pixiv-api option enabled")
-    for item in items:
-        if "pixiv_api" in item.keywords:
-            item.add_marker(skip_pixiv_api)
-
-
 def _run(
     args: list[str],
     *,
@@ -105,6 +79,12 @@ class ComposeTestEnv:
     def api_json(self, method: str, path: str) -> object:
         return _http_json(method, path)
 
+    def dev_task_state(self, task_id: str) -> dict:
+        state = self.api_json("GET", f"/api/dev/task/{task_id}")
+        if not isinstance(state, dict):
+            raise RuntimeError(f"Unexpected dev task state payload for {task_id}: {state!r}")
+        return state
+
     def rabbitmq_queue_counts(self) -> dict[str, int]:
         proc = self.docker_exec("rabbitmq", "rabbitmqctl", "list_queues", "name", "messages", timeout=90)
         counts: dict[str, int] = {}
@@ -141,13 +121,41 @@ class ComposeTestEnv:
             time.sleep(1)
         raise RuntimeError(f"Worker logs did not contain expected text within {timeout}s: {needle}")
 
+    def wait_for_dev_task_terminal_state(self, task_id: str, terminal_state: str, timeout: int = 45) -> dict:
+        deadline = time.time() + timeout
+        last_state: dict | None = None
+        last_error: str | None = None
+        while time.time() < deadline:
+            try:
+                state = self.dev_task_state(task_id)
+                last_state = state
+                if state.get("terminal_state") == terminal_state:
+                    return state
+            except urllib.error.HTTPError as exc:
+                last_error = str(exc)
+                if exc.code != 404:
+                    raise
+            time.sleep(1)
+        raise RuntimeError(
+            f"Dev task {task_id!r} did not reach terminal_state={terminal_state!r} within {timeout}s "
+            f"(last_state={last_state}, last_error={last_error})"
+        )
+
     def clear_state(self) -> None:
         self.docker_exec(
             "pixivutil-worker",
             "sh",
             "-lc",
-            f"rm -f {DEV_SUCCESS_SENTINEL}",
+            f"rm -f {DEV_SUCCESS_SENTINEL} /workdir/.pixivUtil2/dev-dlq-task-state.json /workdir/.pixivUtil2/dev-dlq-task-state.tmp",
             check=False,
+        )
+        self.docker_exec(
+            "rabbitmq",
+            "rabbitmqctl",
+            "purge_queue",
+            "pixivutil-queue",
+            check=False,
+            timeout=90,
         )
         self.docker_exec(
             "rabbitmq",
@@ -173,6 +181,7 @@ def compose_env() -> ComposeTestEnv:
 @pytest.fixture
 def clean_env(compose_env: ComposeTestEnv) -> ComposeTestEnv:
     compose_env.clear_state()
+    compose_env.wait_for_queue_count("pixivutil-queue", 0, timeout=30)
     compose_env.wait_for_queue_count("pixivutil-dead-letter", 0, timeout=30)
     yield compose_env
     compose_env.clear_state()

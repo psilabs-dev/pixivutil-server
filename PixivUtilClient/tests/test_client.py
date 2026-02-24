@@ -21,9 +21,45 @@ async def server_url() -> str:
     async def failure(_: web.Request) -> web.Response:
         return web.json_response({"error": "bad request"}, status=400)
 
+    async def dlq_list(_: web.Request) -> web.Response:
+        return web.json_response(
+            [
+                {
+                    "dead_letter_id": "abc-123",
+                    "task_name": "download_artworks_by_id",
+                    "payload": {"artwork_id": 42},
+                }
+            ]
+        )
+
+    async def dlq_resume_all(_: web.Request) -> web.Response:
+        return web.json_response({"requeued": 2})
+
+    async def dlq_resume_one(request: web.Request) -> web.Response:
+        dead_letter_id = request.match_info["dead_letter_id"]
+        return web.json_response(
+            {
+                "dead_letter_id": dead_letter_id,
+                "requeued": True,
+                "task_name": "download_artworks_by_id",
+            }
+        )
+
+    async def dlq_drop_all(_: web.Request) -> web.Response:
+        return web.json_response({"dropped": 3})
+
+    async def dlq_drop_one(request: web.Request) -> web.Response:
+        dead_letter_id = request.match_info["dead_letter_id"]
+        return web.json_response({"dead_letter_id": dead_letter_id, "dropped": True})
+
     app.router.add_get("/api/database/members", plain_json)
     app.router.add_post("/api/queue/download/artwork/123", auth_echo)
     app.router.add_get("/boom", failure)
+    app.router.add_get("/api/queue/dead-letter/", dlq_list)
+    app.router.add_post("/api/queue/dead-letter/resume", dlq_resume_all)
+    app.router.add_post("/api/queue/dead-letter/{dead_letter_id}/resume", dlq_resume_one)
+    app.router.add_delete("/api/queue/dead-letter/", dlq_drop_all)
+    app.router.add_delete("/api/queue/dead-letter/{dead_letter_id}", dlq_drop_one)
 
     runner = web.AppRunner(app)
     await runner.setup()
@@ -93,3 +129,26 @@ async def test_ssl_flag_is_forwarded() -> None:
     payload = await client._request("GET", "/probe")
     assert payload["ok"] is True
     assert captured["kwargs"]["ssl"] is False
+
+
+@pytest.mark.asyncio
+async def test_dead_letter_queue_client_methods(server_url: str) -> None:
+    async with PixivAsyncClient(server_url) as client:
+        messages = await client.list_dead_letter_messages()
+        assert len(messages) == 1
+        assert messages[0].dead_letter_id == "abc-123"
+        assert messages[0].payload["artwork_id"] == 42
+
+        resumed_all = await client.resume_all_dead_letter_messages()
+        assert resumed_all.requeued == 2
+
+        resumed_one = await client.resume_dead_letter_message("abc-123")
+        assert resumed_one.dead_letter_id == "abc-123"
+        assert resumed_one.requeued is True
+
+        dropped_all = await client.drop_all_dead_letter_messages()
+        assert dropped_all.dropped == 3
+
+        dropped_one = await client.drop_dead_letter_message("abc-123")
+        assert dropped_one.dead_letter_id == "abc-123"
+        assert dropped_one.dropped is True

@@ -90,7 +90,7 @@ def _is_native_celery_message(msg) -> bool:
 
 
 def _clean_republish_headers(headers: dict) -> dict:
-    # Drop broker-added dead-letter metadata so replayed messages don't keep stale x-death history.
+    # Drop broker-added dead-letter metadata and Celery execution state so replay acts like a fresh enqueue.
     ignored = {
         "x-death",
         "x-first-death-exchange",
@@ -99,6 +99,9 @@ def _clean_republish_headers(headers: dict) -> dict:
         "x-last-death-exchange",
         "x-last-death-queue",
         "x-last-death-reason",
+        "retries",
+        "eta",
+        "expires",
     }
     return {k: v for k, v in headers.items() if k not in ignored}
 
@@ -118,7 +121,6 @@ def _republish_native_celery_message(conn, msg) -> str | None:
         "correlation_id",
         "reply_to",
         "priority",
-        "expiration",
         "message_id",
         "timestamp",
         "type",
