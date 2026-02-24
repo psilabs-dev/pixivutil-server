@@ -105,6 +105,8 @@ Authorization: Bearer <your-api-key>
 
 ## Architecture and Development
 
+When running PixivUtil server in development, set `PIXIVUTIL_SERVER_ENV=development`. This will enable debug logging level.
+
 PixivUtil server is a Python project based on PixivUtil2 as its API client engine. PixivUtil2 is a separate git repository added to this as a submodule.
 
 PixivUtil server as a service consists of 3 microservices: the PixivUtil API server, PixivUtil worker, and RabbitMQ queue. The server receives API requests from the user/client, and passes them as long-running jobs to a single-process worker which handles them one at a time via the queue, controlling API volumes and avoiding rate limit violations.
