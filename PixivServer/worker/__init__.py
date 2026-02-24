@@ -6,6 +6,7 @@ from celery.signals import setup_logging, worker_init, worker_shutdown
 import PixivServer
 import PixivServer.service
 import PixivServer.service.pixiv
+from PixivServer.config.celery import dead_letter_queue
 from PixivServer.config.server import config as server_config
 
 logger = logging.getLogger(__name__)
@@ -15,9 +16,10 @@ pixiv_worker.config_from_object('PixivServer.config.celery')
 
 
 @worker_init.connect
-def on_worker_init(*args, **kwargs):
+def on_worker_init(sender, **kwargs):
+    with sender.app.connection() as conn:
+        dead_letter_queue.bind(conn).declare()
     PixivServer.service.pixiv.service.open()
-    return
 
 
 @worker_shutdown.connect
@@ -53,7 +55,8 @@ def config_loggers(*args, **kwargs):
 #     logger.info('Running scheduled tag subscription job...')
 #     subscription_service.run_tag_subscription_job()
 
-# Register task modules
+# Register task modules, as @shared_task decorator only runs when the module is imported.
+# until then, the task functions don't exist in Celery's registry.
 import PixivServer.worker.download  # noqa: E402, F401
 import PixivServer.worker.metadata  # noqa: E402, F401
 

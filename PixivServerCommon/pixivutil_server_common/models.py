@@ -5,6 +5,12 @@ from typing import Literal
 from pydantic import BaseModel, Field
 
 
+class DeadLetterMessage(BaseModel):
+    dead_letter_id: str
+    task_name: str
+    payload: dict
+
+
 class QueueTaskResponse(BaseModel):
     task_id: str
     artwork_id: str | int | None = None
