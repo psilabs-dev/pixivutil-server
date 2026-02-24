@@ -1,58 +1,60 @@
 import asyncio
-import base64
-import contextlib
-import json
 import logging
-import urllib.error
-import urllib.parse
-import urllib.request
+from typing import Any
 
 from fastapi import APIRouter, HTTPException, Response
 from fastapi.responses import JSONResponse
 from kombu import Connection
 
 from PixivServer.config import rabbitmq
-from PixivServer.config.celery import dead_letter_queue
-from PixivServer.worker.download import (
-    delete_artwork_by_id,
-    download_artworks_by_id,
-    download_artworks_by_member_id,
-    download_artworks_by_tag,
-)
-from PixivServer.worker.metadata import (
-    download_artwork_metadata_by_id,
-    download_member_metadata_by_id,
-    download_series_metadata_by_id,
-    download_tag_metadata_by_id,
-)
+from PixivServer.config.celery import dead_letter_queue, default_exchange
+from PixivServer.worker import pixiv_worker
 
 logger = logging.getLogger('uvicorn.pixivutil')
 router = APIRouter()
 
-_TASK_REGISTRY: dict = {
-    "download_artworks_by_id": download_artworks_by_id,
-    "download_artworks_by_member_id": download_artworks_by_member_id,
-    "download_artworks_by_tag": download_artworks_by_tag,
-    "delete_artwork_by_id": delete_artwork_by_id,
-    "download_artwork_metadata_by_id": download_artwork_metadata_by_id,
-    "download_member_metadata_by_id": download_member_metadata_by_id,
-    "download_series_metadata_by_id": download_series_metadata_by_id,
-    "download_tag_metadata_by_id": download_tag_metadata_by_id,
-}
+
+def _extract_task_payload_from_celery_body(body: Any) -> dict:
+    # Celery protocol v2 JSON body is typically [args, kwargs, embed].
+    if not isinstance(body, list) or len(body) < 2:
+        return {}
+    args = body[0]
+    kwargs = body[1]
+    if isinstance(args, list) and len(args) == 1 and isinstance(args[0], dict):
+        return args[0]
+    if isinstance(kwargs, dict) and "request_dict" in kwargs and isinstance(kwargs["request_dict"], dict):
+        return kwargs["request_dict"]
+    if isinstance(kwargs, dict):
+        return kwargs
+    return {}
 
 
-def _mgmt_get_messages(count: int = 100) -> list[dict]:
-    parsed = urllib.parse.urlparse(rabbitmq.config.management_url)
-    credentials = f"{parsed.username}:{parsed.password}"
-    auth = base64.b64encode(credentials.encode()).decode()
-    base_url = f"{parsed.scheme}://{parsed.hostname}:{parsed.port}"
-    url = f"{base_url}/api/queues/%2F/pixivutil-dead-letter/get"
-    data = json.dumps({"count": count, "ackmode": "ack_requeue_true", "encoding": "auto"}).encode()
-    req = urllib.request.Request(url, data=data, method="POST")
-    req.add_header("Content-Type", "application/json")
-    req.add_header("Authorization", f"Basic {auth}")
-    with urllib.request.urlopen(req) as resp:
-        return json.loads(resp.read())
+def _normalize_dead_letter_payload(body: Any, headers: dict | None = None) -> dict | None:
+    if isinstance(body, dict):
+        if "dead_letter_id" in body and "task_name" in body:
+            return {
+                "dead_letter_id": str(body["dead_letter_id"]),
+                "task_name": str(body["task_name"]),
+                "payload": body.get("payload", {}) if isinstance(body.get("payload", {}), dict) else {},
+            }
+        if "task_name" in body and "payload" in body:
+            # Backfill a stable identifier for older custom format if present.
+            return {
+                "dead_letter_id": str(body.get("dead_letter_id") or body.get("task_id") or ""),
+                "task_name": str(body["task_name"]),
+                "payload": body.get("payload", {}) if isinstance(body.get("payload", {}), dict) else {},
+            }
+
+    headers = headers or {}
+    task_name = headers.get("task")
+    task_id = headers.get("id") or headers.get("task_id")
+    if isinstance(task_name, str):
+        return {
+            "dead_letter_id": str(task_id or ""),
+            "task_name": task_name,
+            "payload": _extract_task_payload_from_celery_body(body),
+        }
+    return None
 
 
 def _drain(conn) -> list:
@@ -67,20 +69,114 @@ def _drain(conn) -> list:
     return msgs
 
 
+def _kombu_message_to_dlq_record(msg) -> dict | None:
+    headers = msg.headers if isinstance(msg.headers, dict) else {}
+    return _normalize_dead_letter_payload(msg.payload, headers=headers)
+
+
+def _get_registered_task(task_name: str | None):
+    if not task_name:
+        return None
+    # Skip Celery internals/builtins even if registered.
+    if task_name.startswith("celery."):
+        return None
+    task = pixiv_worker.tasks.get(task_name)
+    return task if task is not None else None
+
+
+def _is_native_celery_message(msg) -> bool:
+    headers = msg.headers if isinstance(msg.headers, dict) else {}
+    return isinstance(headers.get("task"), str)
+
+
+def _clean_republish_headers(headers: dict) -> dict:
+    # Drop broker-added dead-letter metadata so replayed messages don't keep stale x-death history.
+    ignored = {
+        "x-death",
+        "x-first-death-exchange",
+        "x-first-death-queue",
+        "x-first-death-reason",
+        "x-last-death-exchange",
+        "x-last-death-queue",
+        "x-last-death-reason",
+    }
+    return {k: v for k, v in headers.items() if k not in ignored}
+
+
+def _republish_native_celery_message(conn, msg) -> str | None:
+    if not _is_native_celery_message(msg):
+        return None
+
+    headers = msg.headers if isinstance(msg.headers, dict) else {}
+    task_name = headers.get("task")
+    if not isinstance(task_name, str):
+        return None
+
+    props = msg.properties if isinstance(msg.properties, dict) else {}
+    publish_props = {}
+    for key in (
+        "correlation_id",
+        "reply_to",
+        "priority",
+        "expiration",
+        "message_id",
+        "timestamp",
+        "type",
+        "app_id",
+    ):
+        value = props.get(key)
+        if value is not None:
+            publish_props[key] = value
+
+    with conn.Producer() as producer:
+        raw_body = msg.body
+        if isinstance(raw_body, str):
+            raw_body = raw_body.encode(msg.content_encoding or "utf-8")
+        if isinstance(raw_body, memoryview):
+            raw_body = raw_body.tobytes()
+        producer.publish(
+            raw_body,
+            exchange=default_exchange,
+            routing_key="pixivutil-queue",
+            headers=_clean_republish_headers(headers),
+            content_type=msg.content_type,
+            content_encoding=msg.content_encoding,
+            delivery_mode=2,
+            **publish_props,
+        )
+    return task_name
+
+
+def _resume_message(conn, msg, body: dict) -> str | None:
+    task_name = _republish_native_celery_message(conn, msg)
+    if task_name is not None:
+        return task_name
+
+    task_fn = _get_registered_task(body.get("task_name"))
+    if task_fn is None:
+        return None
+    task_fn.delay(body.get("payload", {}))
+    return body.get("task_name")
+
+
 @router.get("/")
 async def list_dead_letter_messages() -> Response:
     """
     List all messages currently in the dead letter queue.
     """
-    try:
-        raw = await asyncio.to_thread(_mgmt_get_messages)
-    except (urllib.error.URLError, json.JSONDecodeError) as e:
-        raise HTTPException(status_code=503, detail=f"RabbitMQ management API unavailable: {e}")
-    messages = []
-    for item in raw:
-        with contextlib.suppress(KeyError, json.JSONDecodeError):
-            messages.append(json.loads(item["payload"]))
-    return JSONResponse(messages)
+    def _run() -> list[dict]:
+        messages: list[dict] = []
+        with Connection(rabbitmq.config.broker_url) as conn:
+            for msg in _drain(conn):
+                try:
+                    normalized = _kombu_message_to_dlq_record(msg)
+                    if normalized is not None:
+                        messages.append(normalized)
+                finally:
+                    msg.reject(requeue=True)
+        return messages
+
+    return JSONResponse(await asyncio.to_thread(_run))
 
 
 @router.post("/resume")
@@ -93,10 +189,13 @@ async def resume_all_dead_letter_messages() -> Response:
         count = 0
         with Connection(rabbitmq.config.broker_url) as conn:
             for msg in _drain(conn):
-                body = msg.payload
-                task_fn = _TASK_REGISTRY.get(body.get("task_name"))
-                if task_fn is not None:
-                    task_fn.delay(body.get("payload", {}))
+                body = _kombu_message_to_dlq_record(msg)
+                if body is None:
+                    logger.warning("Unparseable DLQ message, leaving in queue")
+                    msg.reject(requeue=True)
+                    continue
+                resumed_task_name = _resume_message(conn, msg, body)
+                if resumed_task_name is not None:
                     msg.ack()
                     count += 1
                 else:
@@ -117,15 +216,17 @@ async def resume_dead_letter_message(dead_letter_id: str) -> Response:
         """Returns task_name on success, None if not found, 'unknown' if task unrecognised."""
         with Connection(rabbitmq.config.broker_url) as conn:
             for msg in _drain(conn):
-                body = msg.payload
+                body = _kombu_message_to_dlq_record(msg)
+                if body is None:
+                    msg.reject(requeue=True)
+                    continue
                 if body.get("dead_letter_id") == dead_letter_id:
-                    task_fn = _TASK_REGISTRY.get(body.get("task_name"))
-                    if task_fn is None:
+                    resumed_task_name = _resume_message(conn, msg, body)
+                    if resumed_task_name is None:
                         msg.reject(requeue=True)
                         return "unknown"
-                    task_fn.delay(body.get("payload", {}))
                     msg.ack()
-                    return body.get("task_name")
+                    return resumed_task_name
                 msg.reject(requeue=True)
         return None
 
@@ -158,7 +259,10 @@ async def drop_dead_letter_message(dead_letter_id: str) -> Response:
     def _run() -> bool:
         with Connection(rabbitmq.config.broker_url) as conn:
             for msg in _drain(conn):
-                body = msg.payload
+                body = _kombu_message_to_dlq_record(msg)
+                if body is None:
+                    msg.reject(requeue=True)
+                    continue
                 if body.get("dead_letter_id") == dead_letter_id:
                     msg.ack()
                     return True
