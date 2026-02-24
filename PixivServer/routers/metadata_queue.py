@@ -12,7 +12,7 @@ from PixivServer.models.pixiv_worker import (
     DownloadSeriesMetadataByIdRequest,
     DownloadTagMetadataByIdRequest,
 )
-from PixivServer.worker import (
+from PixivServer.worker.metadata import (
     download_artwork_metadata_by_id,
     download_member_metadata_by_id,
     download_series_metadata_by_id,

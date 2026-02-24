@@ -27,12 +27,13 @@ services:
     build: .
     container_name: pixivutil-worker
     # entrypoint: ["uv", "run"] # use this if you want to keep a non-root user.
-    command: ["celery", "-A", "PixivServer.worker.pixiv_worker", "worker", "--concurrency=1", "--loglevel=info", "-B"]
+    command: ["celery", "-A", "PixivServer.worker.pixiv_worker", "worker", "--concurrency=1", "--loglevel=debug", "-B"]
     environment:
       - PUID=${PUID:-1000}
       - PGID=${PGID:-1000}
       - CELERYBEAT_SCHEDULE=/workdir/.pixivUtil2/celerybeat-schedule
       - PIXIVUTIL_COOKIE=$PIXIVUTIL_COOKIE
+      - PIXIVUTIL_SERVER_ENV=development
       - RABBITMQ_BROKER_URL=amqp://guest:guest@rabbitmq:5672
     volumes:
       - pixivutil-data:/workdir/.pixivUtil2
@@ -45,12 +46,13 @@ services:
     build: .
     container_name: pixivutil-server
     # entrypoint: ["uv", "run"] # use this if you want to keep a non-root user.
-    command: ["uvicorn", "PixivServer.app:app", "--host", "0.0.0.0", "--port", "8000", "--log-level", "info"]
+    command: ["uvicorn", "PixivServer.app:app", "--host", "0.0.0.0", "--port", "8000", "--log-level", "debug"]
     environment:
       - PUID=${PUID:-1000}
       - PGID=${PGID:-1000}
       - PIXIVUTIL_COOKIE=$PIXIVUTIL_COOKIE
       - PIXIVUTIL_SERVER_API_KEY=$PIXIVUTIL_SERVER_API_KEY
+      - PIXIVUTIL_SERVER_ENV=development
       - RABBITMQ_BROKER_URL=amqp://guest:guest@rabbitmq:5672
     volumes:
       - pixivutil-data:/workdir/.pixivUtil2

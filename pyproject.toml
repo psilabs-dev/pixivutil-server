@@ -11,7 +11,7 @@ license = { file = "LICENSE" }
 authors = [
   { name = "psilabs-dev" }
 ]
-version = "2.4.3"
+version = "2.4.4"
 dependencies = [
   "aiofiles>=25.1.0",
   "celery>=5.5.3",
@@ -41,8 +41,14 @@ pixivutil2 = [
 [tool.pyright]
 pythonVersion = "3.12"
 include = ["PixivServer", "PixivServerCommon", "PixivUtilClient", "tests"]
-exclude = ["PixivUtil2"]
+exclude = [
+  "PixivUtil2",
+  "**/node_modules",
+  "**/__pycache__",
+  "**/.*", ".venv",
+]
 reportUnusedCoroutine = "error"
+extraPaths = ["PixivUtil2"]
 
 [tool.ruff]
 exclude = [
