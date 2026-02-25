@@ -3,6 +3,7 @@ import os
 import sqlite3
 import sys
 import traceback
+from typing import Protocol, cast
 from urllib.error import HTTPError
 
 sys.path.append('PixivUtil2')
@@ -34,12 +35,25 @@ from PixivUtil2 import (
 
 logger = logging.getLogger(__name__)
 
+
+class PixivConfigProtocol(Protocol):
+    """Structural protocol for the PixivConfig attributes used by PixivUtilService."""
+    cookie: str
+    retry: int
+    retryWait: int
+    dbPath: str
+    rootDirectory: str
+
+    def loadConfig(self, path: str | None = None) -> None: ...
+    def writeConfig(self, error: bool = False, path: str | None = None) -> None: ...
+
+
 # ------ START CALLER ITEMS ------
 
-__config__ = PixivConfig.PixivConfig()
+__config__: PixivConfigProtocol = cast(PixivConfigProtocol, PixivConfig.PixivConfig())
 configfile = ".pixivUtil2/conf/config.ini"
-__dbManager__ = None
-__br__: PixivBrowserFactory.PixivBrowser = None
+__dbManager__: PixivDBManager | None = None
+__br__: PixivBrowserFactory.PixivBrowser | None = None
 __blacklistTags = []
 __suppressTags = []
 __log__ = None
@@ -134,6 +148,7 @@ class PixivUtilService:
         PixivHelper.print_and_log("info", "Closing...")
         # self.remove_database()
         __config__.writeConfig(path=configfile)
+        assert __dbManager__ is not None
         __dbManager__.close()
 
     def open_database(self):
@@ -153,6 +168,7 @@ class PixivUtilService:
             cursor.close()
 
     def remove_database(self):
+        assert __dbManager__ is not None
         __dbManager__.close()
         os.remove(__config__.dbPath)
 
@@ -166,6 +182,7 @@ class PixivUtilService:
     def login_pixiv(self, cookie) -> bool:
         result = False
         try:
+            assert __br__ is not None
             result = __br__.loginUsingCookie(login_cookie=cookie)
         except (HTTPError, PixivException, AssertionError, ValueError) as e:
             logger.error(f'Error at doLogin(): {sys.exc_info()}')
