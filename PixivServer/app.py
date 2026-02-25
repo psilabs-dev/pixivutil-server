@@ -10,6 +10,7 @@ import PixivServer
 import PixivServer.auth
 import PixivServer.routers
 import PixivServer.routers.database
+import PixivServer.routers.dlq
 import PixivServer.routers.download_queue
 import PixivServer.routers.health
 import PixivServer.routers.metadata_queue
@@ -115,6 +116,11 @@ app.include_router(
 app.include_router(
     PixivServer.routers.database.router,
     prefix="/api/database",
+    dependencies=auth_dependency,
+)
+app.include_router(
+    PixivServer.routers.dlq.router,
+    prefix="/api/queue/dead-letter",
     dependencies=auth_dependency,
 )
 # app.include_router(

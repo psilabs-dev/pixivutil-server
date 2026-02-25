@@ -23,6 +23,7 @@ SYS_DISK_TOTAL_BYTES = Gauge("pixivutil_sys_disk_total_bytes", "Host disk total 
 
 # --- Worker queue metrics (periodic) ---
 QUEUE_DEPTH = Gauge("pixivutil_queue_depth", "Number of messages pending in the task queue")
+DLQ_DEPTH = Gauge("pixivutil_dlq_depth", "Number of messages in the dead letter queue")
 
 # --- Request metrics (per-request via middleware) ---
 HTTP_REQUESTS_TOTAL = Counter(
