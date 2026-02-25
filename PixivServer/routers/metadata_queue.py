@@ -2,10 +2,11 @@ import logging
 import urllib.parse
 
 from celery.result import AsyncResult
-from fastapi import APIRouter
+from fastapi import APIRouter, Query
 from fastapi.responses import JSONResponse
 from pixivutil_server_common.models import TagMetadataFilterMode
 
+from PixivServer.config.celery import QUEUE_MAX_PRIORITY
 from PixivServer.models.pixiv_worker import (
     DownloadArtworkMetadataByIdRequest,
     DownloadMemberMetadataByIdRequest,
@@ -24,7 +25,10 @@ router = APIRouter()
 
 
 @router.post("/member/{member_id}")
-async def queue_download_member_metadata_by_id(member_id: str) -> JSONResponse:
+async def queue_download_member_metadata_by_id(
+    member_id: str,
+    priority: int = Query(default=2, ge=1, le=QUEUE_MAX_PRIORITY),
+) -> JSONResponse:
     """
     Queue download of member metadata by ID.
     """
@@ -36,12 +40,15 @@ async def queue_download_member_metadata_by_id(member_id: str) -> JSONResponse:
     member_id_int = int(member_id)
     logger.info(f"Queueing member metadata download by ID: {member_id_int}.")
     request = DownloadMemberMetadataByIdRequest(member_id=member_id_int)
-    task: AsyncResult = download_member_metadata_by_id.delay(request.model_dump())
+    task: AsyncResult = download_member_metadata_by_id.apply_async(args=[request.model_dump()], priority=priority)
     return JSONResponse({"task_id": task.id, "member_id": member_id_int})
 
 
 @router.post("/artwork/{artwork_id}")
-async def queue_download_artwork_metadata_by_id(artwork_id: str) -> JSONResponse:
+async def queue_download_artwork_metadata_by_id(
+    artwork_id: str,
+    priority: int = Query(default=2, ge=1, le=QUEUE_MAX_PRIORITY),
+) -> JSONResponse:
     """
     Queue download of artwork metadata by ID.
     """
@@ -53,12 +60,15 @@ async def queue_download_artwork_metadata_by_id(artwork_id: str) -> JSONResponse
     artwork_id_int = int(artwork_id)
     logger.info(f"Queueing artwork metadata download by ID: {artwork_id_int}.")
     request = DownloadArtworkMetadataByIdRequest(artwork_id=artwork_id_int)
-    task: AsyncResult = download_artwork_metadata_by_id.delay(request.model_dump())
+    task: AsyncResult = download_artwork_metadata_by_id.apply_async(args=[request.model_dump()], priority=priority)
     return JSONResponse({"task_id": task.id, "artwork_id": artwork_id_int})
 
 
 @router.post("/series/{series_id}")
-async def queue_download_series_metadata_by_id(series_id: str) -> JSONResponse:
+async def queue_download_series_metadata_by_id(
+    series_id: str,
+    priority: int = Query(default=1, ge=1, le=QUEUE_MAX_PRIORITY),
+) -> JSONResponse:
     """
     Queue download of series metadata by ID.
     """
@@ -70,7 +80,7 @@ async def queue_download_series_metadata_by_id(series_id: str) -> JSONResponse:
     series_id_int = int(series_id)
     logger.info(f"Queueing series metadata download by ID: {series_id_int}.")
     request = DownloadSeriesMetadataByIdRequest(series_id=series_id_int)
-    task: AsyncResult = download_series_metadata_by_id.delay(request.model_dump())
+    task: AsyncResult = download_series_metadata_by_id.apply_async(args=[request.model_dump()], priority=priority)
     return JSONResponse({"task_id": task.id, "series_id": series_id_int})
 
 
@@ -78,6 +88,7 @@ async def queue_download_series_metadata_by_id(series_id: str) -> JSONResponse:
 async def queue_download_tag_metadata_by_id(
     tag: str,
     filter_mode: TagMetadataFilterMode = "none",
+    priority: int = Query(default=1, ge=1, le=QUEUE_MAX_PRIORITY),
 ) -> JSONResponse:
     """
     Queue download of tag metadata by tag ID/name.
@@ -89,7 +100,7 @@ async def queue_download_tag_metadata_by_id(
     request = DownloadTagMetadataByIdRequest(
         tag=decoded_tag, filter_mode=filter_mode
     )
-    task: AsyncResult = download_tag_metadata_by_id.delay(request.model_dump())
+    task: AsyncResult = download_tag_metadata_by_id.apply_async(args=[request.model_dump()], priority=priority)
     return JSONResponse(
         {"task_id": task.id, "tag": decoded_tag, "filter_mode": request.filter_mode}
     )
