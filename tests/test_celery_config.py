@@ -1,6 +1,10 @@
 from celery import Celery
 
-from PixivServer.config.celery import DLX_EXCHANGE_NAME, MAIN_QUEUE_NAME, QUEUE_MAX_PRIORITY
+from PixivServer.config.celery import (
+    DLX_EXCHANGE_NAME,
+    MAIN_QUEUE_NAME,
+    QUEUE_MAX_PRIORITY,
+)
 
 
 def test_celery_failure_is_rejected_for_rabbitmq_dlq():
