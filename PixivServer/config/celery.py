@@ -3,7 +3,6 @@ from kombu import Exchange, Queue
 from PixivServer.config import rabbitmq
 
 LEGACY_MAIN_EXCHANGE_NAME = "pixivutil-exchange"
-LEGACY_DLX_EXCHANGE_NAME = "pixivutil-dlx"
 LEGACY_MAIN_QUEUE_NAME = "pixivutil-queue"
 
 MAIN_EXCHANGE_NAME = "pixivutil-v1-exchange"

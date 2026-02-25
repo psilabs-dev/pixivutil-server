@@ -93,14 +93,17 @@ def _collect_disk_metrics() -> None:
 
 
 def _rabbitmq_queue_message_count(queue_name: str) -> int | None:
-    parsed = urlparse(rabbitmq_config.broker_url)
-    user = parsed.username or "guest"
-    password = parsed.password or "guest"
-    host = parsed.hostname or "rabbitmq"
-    raw_vhost = parsed.path.lstrip("/")
+    parsed_mgmt = urlparse(rabbitmq_config.management_url)
+    user = parsed_mgmt.username or "guest"
+    password = parsed_mgmt.password or "guest"
+    base = f"{parsed_mgmt.scheme}://{parsed_mgmt.hostname}"
+    if parsed_mgmt.port:
+        base = f"{base}:{parsed_mgmt.port}"
+    parsed_broker = urlparse(rabbitmq_config.broker_url)
+    raw_vhost = parsed_broker.path.lstrip("/")
     vhost = raw_vhost if raw_vhost else "/"
     encoded_vhost = quote(vhost, safe="")
-    url = f"http://{host}:15672/api/queues/{encoded_vhost}/{queue_name}"  # TODO: if rabbitmq management layer isn't set up, then we have a problem.
+    url = f"{base}/api/queues/{encoded_vhost}/{queue_name}"
     credentials = base64.b64encode(f"{user}:{password}".encode()).decode()
     req = urllib.request.Request(url, headers={"Authorization": f"Basic {credentials}"})
     try:
