@@ -14,10 +14,10 @@ from PixivServer.models.pixiv_worker import (
     DownloadTagMetadataByIdRequest,
 )
 from PixivServer.worker.metadata import (
-    download_artwork_metadata_by_id,
-    download_member_metadata_by_id,
-    download_series_metadata_by_id,
-    download_tag_metadata_by_id,
+    download_artwork_metadata_by_id_task,
+    download_member_metadata_by_id_task,
+    download_series_metadata_by_id_task,
+    download_tag_metadata_by_id_task,
 )
 
 logger = logging.getLogger("uvicorn.pixivutil")
@@ -40,7 +40,7 @@ async def queue_download_member_metadata_by_id(
     member_id_int = int(member_id)
     logger.info(f"Queueing member metadata download by ID: {member_id_int}.")
     request = DownloadMemberMetadataByIdRequest(member_id=member_id_int)
-    task: AsyncResult = download_member_metadata_by_id.apply_async(args=[request.model_dump()], priority=priority)
+    task: AsyncResult = download_member_metadata_by_id_task.apply_async(args=[request.model_dump()], priority=priority)
     return JSONResponse({"task_id": task.id, "member_id": member_id_int})
 
 
@@ -60,7 +60,7 @@ async def queue_download_artwork_metadata_by_id(
     artwork_id_int = int(artwork_id)
     logger.info(f"Queueing artwork metadata download by ID: {artwork_id_int}.")
     request = DownloadArtworkMetadataByIdRequest(artwork_id=artwork_id_int)
-    task: AsyncResult = download_artwork_metadata_by_id.apply_async(args=[request.model_dump()], priority=priority)
+    task: AsyncResult = download_artwork_metadata_by_id_task.apply_async(args=[request.model_dump()], priority=priority)
     return JSONResponse({"task_id": task.id, "artwork_id": artwork_id_int})
 
 
@@ -80,7 +80,7 @@ async def queue_download_series_metadata_by_id(
     series_id_int = int(series_id)
     logger.info(f"Queueing series metadata download by ID: {series_id_int}.")
     request = DownloadSeriesMetadataByIdRequest(series_id=series_id_int)
-    task: AsyncResult = download_series_metadata_by_id.apply_async(args=[request.model_dump()], priority=priority)
+    task: AsyncResult = download_series_metadata_by_id_task.apply_async(args=[request.model_dump()], priority=priority)
     return JSONResponse({"task_id": task.id, "series_id": series_id_int})
 
 
@@ -100,7 +100,7 @@ async def queue_download_tag_metadata_by_id(
     request = DownloadTagMetadataByIdRequest(
         tag=decoded_tag, filter_mode=filter_mode
     )
-    task: AsyncResult = download_tag_metadata_by_id.apply_async(args=[request.model_dump()], priority=priority)
+    task: AsyncResult = download_tag_metadata_by_id_task.apply_async(args=[request.model_dump()], priority=priority)
     return JSONResponse(
         {"task_id": task.id, "tag": decoded_tag, "filter_mode": request.filter_mode}
     )

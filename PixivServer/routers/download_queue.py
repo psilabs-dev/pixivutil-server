@@ -19,14 +19,15 @@ from PixivServer.models.pixiv_worker import (
 from PixivServer.repository.pixivutil import PixivUtilRepository
 from PixivServer.utils import is_valid_date
 from PixivServer.worker.download import (
-    delete_artwork_by_id,
-    download_artworks_by_id,
-    download_artworks_by_member_id,
-    download_artworks_by_tag,
+    delete_artwork_by_id_task,
+    download_artworks_by_id_task,
+    download_artworks_by_member_id_task,
+    download_artworks_by_tag_task,
 )
 
 logger = logging.getLogger('uvicorn.pixivutil')
 router = APIRouter()
+
 
 def get_artwork_and_member_name_from_db(artwork_id: int) -> tuple[str | None, str | None]:
     repository = PixivUtilRepository()
@@ -69,7 +70,7 @@ async def queue_download_artwork_by_id(
     logger.info(f"Downloading Pixiv artwork by image ID: {artwork_id}.")
     request = DownloadArtworkByIdRequest(artwork_id=int(artwork_id))
     artwork_title, member_name = get_artwork_and_member_name_from_db(request.artwork_id)
-    task: AsyncResult = download_artworks_by_id.apply_async(args=[request.model_dump()], priority=priority)
+    task: AsyncResult = download_artworks_by_id_task.apply_async(args=[request.model_dump()], priority=priority)
     return JSONResponse({
         "task_id": task.id,
         'artwork_id': artwork_id,
@@ -88,7 +89,7 @@ async def queue_download_artworks_by_member_id(
     logger.info(f"Downloading Pixiv artworks by member ID: {member_id}.")
     request = DownloadArtworksByMemberIdRequest(member_id=int(member_id))
     member_name = get_member_name_from_db(request.member_id)
-    task: AsyncResult = download_artworks_by_member_id.apply_async(args=[request.model_dump()], priority=priority)
+    task: AsyncResult = download_artworks_by_member_id_task.apply_async(args=[request.model_dump()], priority=priority)
     return JSONResponse({
         "task_id": task.id,
         'member_id': member_id,
@@ -142,7 +143,7 @@ async def queue_download_artworks_by_tag(
         start_date=start_date,
         end_date=end_date,
     )
-    task: AsyncResult = download_artworks_by_tag.apply_async(args=[request.model_dump()], priority=priority)
+    task: AsyncResult = download_artworks_by_tag_task.apply_async(args=[request.model_dump()], priority=priority)
     return JSONResponse({
         'task_id': task.id,
         'tag': decoded_tag,
@@ -166,7 +167,7 @@ async def queue_delete_artwork_by_id(
     """
     logger.info(f"Deleting Pixiv artwork by image ID: {artwork_id} (delete_metadata={delete_metadata}).")
     request = DeleteArtworkByIdRequest(artwork_id=int(artwork_id), delete_metadata=delete_metadata)
-    task: AsyncResult = delete_artwork_by_id.apply_async(args=[request.model_dump()], priority=priority)
+    task: AsyncResult = delete_artwork_by_id_task.apply_async(args=[request.model_dump()], priority=priority)
     return JSONResponse({
         "task_id": task.id,
         'artwork_id': artwork_id,

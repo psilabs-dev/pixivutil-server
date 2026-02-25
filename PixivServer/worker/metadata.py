@@ -13,6 +13,7 @@ from PixivServer.models.pixiv_worker import (
     DownloadMemberMetadataByIdRequest,
     DownloadSeriesMetadataByIdRequest,
     DownloadTagMetadataByIdRequest,
+    as_celery_task,
 )
 from PixivServer.service.pixiv import PixivException
 
@@ -111,3 +112,9 @@ def download_tag_metadata_by_id(self, request_dict: dict):
         return False
     finally:
         __job_sleep()
+
+
+download_member_metadata_by_id_task = as_celery_task(download_member_metadata_by_id)
+download_artwork_metadata_by_id_task = as_celery_task(download_artwork_metadata_by_id)
+download_series_metadata_by_id_task = as_celery_task(download_series_metadata_by_id)
+download_tag_metadata_by_id_task = as_celery_task(download_tag_metadata_by_id)

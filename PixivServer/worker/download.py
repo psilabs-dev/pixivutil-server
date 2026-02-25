@@ -13,6 +13,7 @@ from PixivServer.models.pixiv_worker import (
     DownloadArtworkByIdRequest,
     DownloadArtworksByMemberIdRequest,
     DownloadArtworksByTagsRequest,
+    as_celery_task,
 )
 from PixivServer.service.pixiv import PixivException
 
@@ -99,3 +100,9 @@ def delete_artwork_by_id(self, request_dict: dict):
         return False
     finally:
         __job_sleep()
+
+
+download_artworks_by_id_task = as_celery_task(download_artworks_by_id)
+download_artworks_by_member_id_task = as_celery_task(download_artworks_by_member_id)
+download_artworks_by_tag_task = as_celery_task(download_artworks_by_tag)
+delete_artwork_by_id_task = as_celery_task(delete_artwork_by_id)
