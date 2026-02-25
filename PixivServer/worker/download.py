@@ -1,4 +1,5 @@
 import logging
+import os
 import random
 import time
 import traceback
@@ -19,12 +20,16 @@ from PixivServer.service.pixiv import PixivException
 
 logger = logging.getLogger(__name__)
 
-_NETWORK_MAX_RETRIES = 3
-_NETWORK_RETRY_COUNTDOWN = 60
+_NETWORK_MAX_RETRIES = int(os.getenv("PIXIVUTIL_WORKER_NETWORK_MAX_RETRIES", "3"))
+_NETWORK_RETRY_COUNTDOWN = int(os.getenv("PIXIVUTIL_WORKER_NETWORK_RETRY_COUNTDOWN", "60"))
+_JOB_SLEEP_MIN_MS = int(os.getenv("PIXIVUTIL_WORKER_JOB_SLEEP_MIN_MS", "1000"))
+_JOB_SLEEP_MAX_MS = int(os.getenv("PIXIVUTIL_WORKER_JOB_SLEEP_MAX_MS", "5000"))
 
 
 def __job_sleep():
-    time.sleep(random.uniform(1, 5))
+    lower_ms = min(_JOB_SLEEP_MIN_MS, _JOB_SLEEP_MAX_MS)
+    upper_ms = max(_JOB_SLEEP_MIN_MS, _JOB_SLEEP_MAX_MS)
+    time.sleep(random.uniform(lower_ms, upper_ms) / 1000)
     return 0
 
 

@@ -23,6 +23,7 @@ from PixivUtil2 import (
     PixivArtistHandler,
     PixivBrowserFactory,
     PixivConfig,
+    PixivConstant,
     PixivDBManager,
     PixivException,
     PixivHelper,
@@ -90,6 +91,12 @@ class PixivUtilService:
 
         if pixivutil_config.cookie:
             __config__.cookie = pixivutil_config.cookie
+        pixiv_retry = os.getenv("PIXIVUTIL2_NETWORK_RETRY")
+        if pixiv_retry is not None:
+            __config__.retry = int(pixiv_retry)
+        pixiv_retry_wait = os.getenv("PIXIVUTIL2_NETWORK_RETRY_WAIT")
+        if pixiv_retry_wait is not None:
+            __config__.retryWait = int(pixiv_retry_wait)
 
         return
 
@@ -191,6 +198,52 @@ class PixivUtilService:
         if data is None:
             raise PixivException("Cannot get artwork name; response: " + str(response))
         return data.imageTitle
+
+    def _raise_metadata_process_image_failure(
+        self,
+        *,
+        artwork_id: int,
+        process_result: int,
+        previous_error_list_len: int,
+        previous_error_code: int,
+    ) -> None:
+        if process_result == PixivConstant.PIXIVUTIL_OK:
+            return
+
+        error_list = globals()["__errorList"]
+        new_errors = error_list[previous_error_list_len:] if len(error_list) >= previous_error_list_len else error_list
+        pixiv_error: PixivException | None = None
+        for item in reversed(new_errors):
+            if not isinstance(item, dict):
+                continue
+            exc = item.get("exception")
+            if isinstance(exc, PixivException):
+                pixiv_error = exc
+                break
+
+        if pixiv_error is not None:
+            if pixiv_error.errorCode in (PixivException.DOWNLOAD_FAILED_NETWORK, PixivException.SERVER_ERROR):
+                raise ConnectionError(
+                    f"Artwork metadata fetch failed due to network/server error for artwork_id={artwork_id}"
+                ) from pixiv_error
+            raise RuntimeError(
+                f"Artwork metadata fetch failed for artwork_id={artwork_id} "
+                f"(pixiv_error_code={pixiv_error.errorCode}, result={process_result})"
+            ) from pixiv_error
+
+        current_error_code = ERROR_CODE
+        error_code = current_error_code if current_error_code != previous_error_code else -1
+        if error_code in (PixivException.DOWNLOAD_FAILED_NETWORK, PixivException.SERVER_ERROR):
+            raise ConnectionError(
+                f"Artwork metadata fetch failed due to network/server error for artwork_id={artwork_id} "
+                f"(pixiv_error_code={error_code}, result={process_result})"
+            )
+        # Metadata fetch failures can be swallowed by PixivUtil2 without a stable error code.
+        # Treat unclassified failures as transient so worker retry/DLQ policy can recover them.
+        raise ConnectionError(
+            f"Artwork metadata fetch failed with unclassified error for artwork_id={artwork_id} "
+            f"(pixiv_error_code={error_code}, result={process_result})"
+        )
 
     def download_artwork_by_id(self, request: DownloadArtworkByIdRequest):
         PixivHelper.print_and_log("info", f"Download by artwork ID: {request.artwork_id}")
@@ -328,13 +381,21 @@ class PixivUtilService:
 
     def download_artwork_metadata_by_id(self, request: DownloadArtworkMetadataByIdRequest):
         PixivHelper.print_and_log("info", f"Download artwork metadata by ID: {request.artwork_id}")
-        PixivImageHandler.process_image(
+        previous_error_list_len = len(globals()["__errorList"])
+        previous_error_code = ERROR_CODE
+        result = PixivImageHandler.process_image(
             sys.modules[__name__],
             __config__,
             artist=None,
             image_id=request.artwork_id,
             useblacklist=False,
             metadata_only=True,
+        )
+        self._raise_metadata_process_image_failure(
+            artwork_id=request.artwork_id,
+            process_result=result,
+            previous_error_list_len=previous_error_list_len,
+            previous_error_code=previous_error_code,
         )
 
     def download_series_metadata_by_id(self, request: DownloadSeriesMetadataByIdRequest):

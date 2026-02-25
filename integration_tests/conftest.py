@@ -1,4 +1,5 @@
 import json
+import os
 import shutil
 import subprocess
 import time
@@ -148,6 +149,62 @@ class ComposeTestEnv:
             f"Queue {queue_name!r} did not reach {expected} within {timeout}s (last={last_count})"
         )
 
+    def wait_for_dead_letter_message(self, dead_letter_id: str, timeout: int = 90) -> dict:
+        deadline = time.time() + timeout
+        last_messages: list[dict] | None = None
+        while time.time() < deadline:
+            messages = self.api_json("GET", "/api/queue/dead-letter/")
+            if not isinstance(messages, list):
+                raise RuntimeError(f"Unexpected DLQ payload: {messages!r}")
+            last_messages = messages
+            for message in messages:
+                if isinstance(message, dict) and message.get("dead_letter_id") == dead_letter_id:
+                    return message
+            time.sleep(1)
+        queue_counts: dict[str, int] | str
+        worker_logs: str
+        try:
+            queue_counts = self.rabbitmq_queue_counts()
+        except Exception as exc:  # noqa: BLE001
+            queue_counts = f"<failed to read queue counts: {exc}>"
+        try:
+            worker_logs = self.compose("logs", "--tail=200", "pixivutil-worker", timeout=90).stdout
+        except Exception as exc:  # noqa: BLE001
+            worker_logs = f"<failed to read worker logs: {exc}>"
+        raise RuntimeError(
+            f"DLQ message {dead_letter_id!r} not found within {timeout}s "
+            f"(last_messages={last_messages}, queue_counts={queue_counts}, worker_logs_tail={worker_logs})"
+        )
+
+    def block_worker_pixiv_hosts(self) -> None:
+        self.docker_exec(
+            "pixivutil-worker",
+            "sh",
+            "-lc",
+            (
+                "printf '\\n0.0.0.0 www.pixiv.net # codex-inttest\\n"
+                "0.0.0.0 i.pximg.net # codex-inttest\\n' >> /etc/hosts"
+            ),
+            timeout=30,
+        )
+
+    def unblock_worker_pixiv_hosts(self) -> None:
+        script = (
+            "from pathlib import Path\n"
+            "path = Path('/etc/hosts')\n"
+            "lines = path.read_text().splitlines()\n"
+            "filtered = [line for line in lines if 'codex-inttest' not in line]\n"
+            "path.write_text('\\n'.join(filtered) + ('\\n' if filtered else ''))\n"
+        )
+        self.docker_exec(
+            "pixivutil-worker",
+            "python",
+            "-c",
+            script,
+            check=False,
+            timeout=30,
+        )
+
     def wait_worker_log_contains(self, needle: str, timeout: int = 45) -> None:
         deadline = time.time() + timeout
         while time.time() < deadline:
@@ -198,6 +255,7 @@ class ComposeTestEnv:
         )
 
     def clear_state(self) -> None:
+        self.unblock_worker_pixiv_hosts()
         self.docker_exec(
             "pixivutil-worker",
             "sh",
@@ -240,6 +298,11 @@ class ComposeTestEnv:
 @pytest.fixture(scope="session")
 def compose_env() -> ComposeTestEnv:
     _require_docker_tools()
+    os.environ.setdefault("PIXIVUTIL_WORKER_NETWORK_RETRY_COUNTDOWN", "1")
+    os.environ.setdefault("PIXIVUTIL_WORKER_JOB_SLEEP_MIN_MS", "10")
+    os.environ.setdefault("PIXIVUTIL_WORKER_JOB_SLEEP_MAX_MS", "50")
+    os.environ.setdefault("PIXIVUTIL2_NETWORK_RETRY", "0")
+    os.environ.setdefault("PIXIVUTIL2_NETWORK_RETRY_WAIT", "1")
     env = ComposeTestEnv()
     env.compose("down", "--volumes", check=False, timeout=180)
     env.compose("up", "--build", "-d", timeout=600)
