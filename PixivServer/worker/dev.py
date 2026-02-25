@@ -6,6 +6,7 @@ from typing import Any
 
 from celery import shared_task
 
+from PixivServer.config.celery import MAIN_QUEUE_NAME
 from PixivServer.models.pixiv_worker import DownloadArtworkByIdRequest
 
 logger = logging.getLogger(__name__)
@@ -161,7 +162,7 @@ def get_priority_probe_state() -> dict[str, Any]:
 # Use this for any kind of DLQ-related task and make any necessary changes in logic to prove/confirm hypotheses.
 # This will be commented out once DLQ is stable, so in the meantime do whatever you want with this endpoint,
 # just clean it up when done and don't commit things back in.
-@shared_task(bind=True, name="dev_download_artworks_by_id", queue='pixivutil-queue')
+@shared_task(bind=True, name="dev_download_artworks_by_id", queue=MAIN_QUEUE_NAME)
 def dev_download_artworks_by_id(self, request_dict: dict):
     request = DownloadArtworkByIdRequest(**request_dict)
     task_id = str(self.request.id)
@@ -183,7 +184,7 @@ def dev_download_artworks_by_id(self, request_dict: dict):
     raise ConnectionError("Simulated terminal failure after retries")
 
 
-@shared_task(bind=True, name="dev_priority_probe_task", queue='pixivutil-queue')
+@shared_task(bind=True, name="dev_priority_probe_task", queue=MAIN_QUEUE_NAME)
 def dev_priority_probe_task(self, request_dict: dict):
     task_id = str(self.request.id)
     label = str(request_dict.get("label", task_id))

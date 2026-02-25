@@ -8,6 +8,12 @@ from pathlib import Path
 
 import pytest
 
+from PixivServer.config.celery import (
+    DEAD_LETTER_QUEUE_NAME,
+    LEGACY_MAIN_QUEUE_NAME,
+    MAIN_QUEUE_NAME,
+)
+
 REPO_ROOT = Path(__file__).resolve().parents[1]
 BASE_URL = "http://localhost:8000"
 AUTH_HEADER = ("Authorization", "Bearer pixiv")
@@ -100,6 +106,36 @@ class ComposeTestEnv:
                 continue
         return counts
 
+    def restart_worker(self) -> None:
+        self.compose("restart", "pixivutil-worker", timeout=240)
+
+    def wait_for_queue_absent(self, queue_name: str, timeout: int = 45) -> None:
+        deadline = time.time() + timeout
+        last_counts: dict[str, int] | None = None
+        while time.time() < deadline:
+            counts = self.rabbitmq_queue_counts()
+            last_counts = counts
+            if queue_name not in counts:
+                return
+            time.sleep(1)
+        raise RuntimeError(f"Queue {queue_name!r} still exists after {timeout}s (last_counts={last_counts})")
+
+    def seed_legacy_main_queue_message(self, body: str = "legacy-cutover-test") -> None:
+        script = (
+            "from kombu import Connection, Exchange, Queue; "
+            f"from PixivServer.config.celery import LEGACY_MAIN_EXCHANGE_NAME, LEGACY_MAIN_QUEUE_NAME; "
+            "conn = Connection('amqp://guest:guest@rabbitmq:5672'); "
+            "conn.connect(); "
+            "ex = Exchange(LEGACY_MAIN_EXCHANGE_NAME, type='direct', durable=True); "
+            "q = Queue(LEGACY_MAIN_QUEUE_NAME, exchange=ex, routing_key=LEGACY_MAIN_QUEUE_NAME, durable=True); "
+            "q = q.bind(conn); q.declare(); "
+            "producer = conn.Producer(); "
+            f"producer.publish({body!r}, exchange=ex, routing_key=LEGACY_MAIN_QUEUE_NAME, "
+            "content_type='text/plain', content_encoding='utf-8', delivery_mode=2); "
+            "conn.release()"
+        )
+        self.docker_exec("pixivutil-worker", "python", "-c", script, timeout=120)
+
     def wait_for_queue_count(self, queue_name: str, expected: int, timeout: int = 45) -> None:
         deadline = time.time() + timeout
         last_count: int | None = None
@@ -179,7 +215,7 @@ class ComposeTestEnv:
             "rabbitmq",
             "rabbitmqctl",
             "purge_queue",
-            "pixivutil-queue",
+            MAIN_QUEUE_NAME,
             check=False,
             timeout=90,
         )
@@ -187,7 +223,15 @@ class ComposeTestEnv:
             "rabbitmq",
             "rabbitmqctl",
             "purge_queue",
-            "pixivutil-dead-letter",
+            DEAD_LETTER_QUEUE_NAME,
+            check=False,
+            timeout=90,
+        )
+        self.docker_exec(
+            "rabbitmq",
+            "rabbitmqctl",
+            "purge_queue",
+            LEGACY_MAIN_QUEUE_NAME,
             check=False,
             timeout=90,
         )
@@ -207,7 +251,7 @@ def compose_env() -> ComposeTestEnv:
 @pytest.fixture
 def clean_env(compose_env: ComposeTestEnv) -> ComposeTestEnv:
     compose_env.clear_state()
-    compose_env.wait_for_queue_count("pixivutil-queue", 0, timeout=30)
-    compose_env.wait_for_queue_count("pixivutil-dead-letter", 0, timeout=30)
+    compose_env.wait_for_queue_count(MAIN_QUEUE_NAME, 0, timeout=30)
+    compose_env.wait_for_queue_count(DEAD_LETTER_QUEUE_NAME, 0, timeout=30)
     yield compose_env
     compose_env.clear_state()

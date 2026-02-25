@@ -2,11 +2,16 @@ import logging
 
 from celery import Celery
 from celery.signals import setup_logging, worker_init, worker_shutdown
+from kombu import Queue
 
 import PixivServer
 import PixivServer.service
 import PixivServer.service.pixiv
-from PixivServer.config.celery import dead_letter_queue
+from PixivServer.config.celery import (
+    LEGACY_MAIN_QUEUE_NAME,
+    dead_letter_queue,
+    main_queue,
+)
 from PixivServer.config.server import config as server_config
 
 logger = logging.getLogger(__name__)
@@ -18,6 +23,8 @@ pixiv_worker.config_from_object('PixivServer.config.celery')
 @worker_init.connect
 def on_worker_init(sender, **kwargs):
     with sender.app.connection() as conn:
+        _cleanup_legacy_queue(conn, LEGACY_MAIN_QUEUE_NAME)
+        main_queue.bind(conn).declare()
         dead_letter_queue.bind(conn).declare()
     PixivServer.service.pixiv.service.open()
 
@@ -31,6 +38,22 @@ def on_worker_shutdown(*args, **kwargs):
 @setup_logging.connect
 def config_loggers(*args, **kwargs):
     return
+
+
+def _cleanup_legacy_queue(conn, queue_name: str) -> None:
+    queue = Queue(name=queue_name, durable=True).bind(conn)
+    try:
+        queue.purge()
+        logger.warning(f"Purged legacy queue during v1 broker cutover: {queue_name}")
+    except Exception as exc:  # noqa: BLE001
+        if "NOT_FOUND" not in str(exc):
+            logger.warning(f"Failed to purge legacy queue {queue_name}: {exc}")
+    try:
+        queue.delete(if_unused=False, if_empty=False)
+        logger.warning(f"Deleted legacy queue during v1 broker cutover: {queue_name}")
+    except Exception as exc:  # noqa: BLE001
+        if "NOT_FOUND" not in str(exc):
+            logger.warning(f"Failed to delete legacy queue {queue_name}: {exc}")
 
 
 # @celery.on_after_configure.connect

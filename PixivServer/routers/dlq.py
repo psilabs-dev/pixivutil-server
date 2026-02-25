@@ -7,7 +7,7 @@ from fastapi.responses import JSONResponse
 from kombu import Connection
 
 from PixivServer.config import rabbitmq
-from PixivServer.config.celery import dead_letter_queue, default_exchange
+from PixivServer.config.celery import MAIN_ROUTING_KEY, dead_letter_queue, default_exchange
 from PixivServer.worker import pixiv_worker
 
 logger = logging.getLogger('uvicorn.pixivutil')
@@ -139,7 +139,7 @@ def _republish_native_celery_message(conn, msg) -> str | None:
         producer.publish(
             raw_body,
             exchange=default_exchange,
-            routing_key="pixivutil-queue",
+            routing_key=MAIN_ROUTING_KEY,
             headers=_clean_republish_headers(headers),
             content_type=msg.content_type,
             content_encoding=msg.content_encoding,

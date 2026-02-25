@@ -20,6 +20,7 @@ import PixivServer.service
 import PixivServer.service.pixiv
 from PixivServer.config.pixivutil import config as pixivutil_config
 from PixivServer.config.rabbitmq import config as rabbitmq_config
+from PixivServer.config.celery import MAIN_QUEUE_NAME
 from PixivServer.metrics import (
     DB_ARTWORKS,
     DB_MEMBERS,
@@ -98,7 +99,7 @@ def _collect_queue_depth() -> None:
     raw_vhost = parsed.path.lstrip("/")
     vhost = raw_vhost if raw_vhost else "/"
     encoded_vhost = quote(vhost, safe="")
-    url = f"http://{host}:15672/api/queues/{encoded_vhost}/pixivutil-queue" # TODO: if rabbitmq management layer isn't set up, then we have a problem.
+    url = f"http://{host}:15672/api/queues/{encoded_vhost}/{MAIN_QUEUE_NAME}" # TODO: if rabbitmq management layer isn't set up, then we have a problem.
     credentials = base64.b64encode(f"{user}:{password}".encode()).decode()
     req = urllib.request.Request(url, headers={"Authorization": f"Basic {credentials}"})
     try:

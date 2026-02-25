@@ -6,6 +6,7 @@ import traceback
 from celery import shared_task
 
 import PixivServer.service.pixiv
+from PixivServer.config.celery import MAIN_QUEUE_NAME
 from PixivServer.models.pixiv_worker import (
     DownloadArtworkMetadataByIdRequest,
     DownloadMemberMetadataByIdRequest,
@@ -21,7 +22,7 @@ def __job_sleep():
     return 0
 
 
-@shared_task(name="download_member_metadata_by_id", queue='pixivutil-queue')
+@shared_task(name="download_member_metadata_by_id", queue=MAIN_QUEUE_NAME)
 def download_member_metadata_by_id(request_dict: dict):
     try:
         request = DownloadMemberMetadataByIdRequest(**request_dict)
@@ -39,7 +40,7 @@ def download_member_metadata_by_id(request_dict: dict):
         __job_sleep()
 
 
-@shared_task(name="download_artwork_metadata_by_id", queue='pixivutil-queue')
+@shared_task(name="download_artwork_metadata_by_id", queue=MAIN_QUEUE_NAME)
 def download_artwork_metadata_by_id(request_dict: dict):
     try:
         request = DownloadArtworkMetadataByIdRequest(**request_dict)
@@ -57,7 +58,7 @@ def download_artwork_metadata_by_id(request_dict: dict):
         __job_sleep()
 
 
-@shared_task(name="download_series_metadata_by_id", queue='pixivutil-queue')
+@shared_task(name="download_series_metadata_by_id", queue=MAIN_QUEUE_NAME)
 def download_series_metadata_by_id(request_dict: dict):
     try:
         request = DownloadSeriesMetadataByIdRequest(**request_dict)
@@ -75,7 +76,7 @@ def download_series_metadata_by_id(request_dict: dict):
         __job_sleep()
 
 
-@shared_task(name="download_tag_metadata_by_id", queue='pixivutil-queue')
+@shared_task(name="download_tag_metadata_by_id", queue=MAIN_QUEUE_NAME)
 def download_tag_metadata_by_id(request_dict: dict):
     try:
         request = DownloadTagMetadataByIdRequest(**request_dict)

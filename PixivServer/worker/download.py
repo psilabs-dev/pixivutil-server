@@ -6,6 +6,7 @@ import traceback
 from celery import shared_task
 
 import PixivServer.service.pixiv
+from PixivServer.config.celery import MAIN_QUEUE_NAME
 from PixivServer.models.pixiv_worker import (
     DeleteArtworkByIdRequest,
     DownloadArtworkByIdRequest,
@@ -21,7 +22,7 @@ def __job_sleep():
     return 0
 
 
-@shared_task(name="download_artworks_by_id", queue='pixivutil-queue')
+@shared_task(name="download_artworks_by_id", queue=MAIN_QUEUE_NAME)
 def download_artworks_by_id(request_dict: dict):
     try:
         request = DownloadArtworkByIdRequest(**request_dict)
@@ -36,7 +37,7 @@ def download_artworks_by_id(request_dict: dict):
         __job_sleep()
 
 
-@shared_task(name="download_artworks_by_member_id", queue='pixivutil-queue')
+@shared_task(name="download_artworks_by_member_id", queue=MAIN_QUEUE_NAME)
 def download_artworks_by_member_id(request_dict: dict):
     try:
         request = DownloadArtworksByMemberIdRequest(**request_dict)
@@ -51,7 +52,7 @@ def download_artworks_by_member_id(request_dict: dict):
         __job_sleep()
 
 
-@shared_task(name="download_artworks_by_tag", queue='pixivutil-queue')
+@shared_task(name="download_artworks_by_tag", queue=MAIN_QUEUE_NAME)
 def download_artworks_by_tag(request_dict: dict):
     try:
         request = DownloadArtworksByTagsRequest(**request_dict)
@@ -66,7 +67,7 @@ def download_artworks_by_tag(request_dict: dict):
         __job_sleep()
 
 
-@shared_task(name="delete_artwork_by_id", queue='pixivutil-queue')
+@shared_task(name="delete_artwork_by_id", queue=MAIN_QUEUE_NAME)
 def delete_artwork_by_id(request_dict: dict):
     try:
         request = DeleteArtworkByIdRequest(**request_dict)

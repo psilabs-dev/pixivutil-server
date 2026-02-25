@@ -2,6 +2,8 @@ import random
 
 import pytest
 
+from PixivServer.config.celery import LEGACY_MAIN_QUEUE_NAME, MAIN_QUEUE_NAME, QUEUE_MAX_PRIORITY
+
 
 @pytest.mark.pixiv_api
 def test_high_priority_tasks_are_consecutive_and_preceded_by_at_most_one_low(clean_env):
@@ -75,3 +77,51 @@ def test_three_tier_priority_orders_h_then_n_then_l_with_at_most_one_leading_low
     assert len(l_block) == 10 - leading_low_count, (
         f"Expected remaining low tasks to be {10 - leading_low_count}, got {len(l_block)} in order={started}"
     )
+
+
+@pytest.mark.pixiv_api
+def test_priority_values_above_queue_max_are_not_a_higher_tier_than_max(clean_env):
+    """
+    RabbitMQ x-max-priority should clamp >max values so they behave like max priority, not a new tier.
+    """
+    over_limit = QUEUE_MAX_PRIORITY + 1
+    clean_env.api_json("POST", "/api/dev/priority/L1?priority=1&sleep_ms=1800")
+    clean_env.api_json("POST", "/api/dev/priority/H3?priority=3&sleep_ms=200")
+    clean_env.api_json(f"POST", f"/api/dev/priority/HOver?priority={over_limit}&sleep_ms=200")
+    clean_env.api_json("POST", "/api/dev/priority/N1?priority=2&sleep_ms=200")
+
+    state = clean_env.wait_for_priority_probe_started_count(4, timeout=90)
+    started = state.get("started")
+    assert isinstance(started, list)
+    assert started[0] == "L1"
+    assert started[1:] == ["H3", "HOver", "N1"], f"Expected over-limit priority to be clamped to max-priority tier, got {started}"
+
+
+@pytest.mark.pixiv_api
+def test_worker_startup_deletes_legacy_main_queue(clean_env):
+    """
+    Hard-cutover behavior: worker init should purge/delete the legacy main queue if it exists.
+    """
+    clean_env.seed_legacy_main_queue_message()
+    clean_env.wait_for_queue_count(LEGACY_MAIN_QUEUE_NAME, 1, timeout=30)
+
+    clean_env.restart_worker()
+    clean_env.wait_for_queue_absent(LEGACY_MAIN_QUEUE_NAME, timeout=60)
+
+
+@pytest.mark.pixiv_api
+def test_worker_restart_keeps_v1_queues_usable_when_they_already_exist(clean_env):
+    """
+    Restarting the worker with pre-existing v1 queues should remain healthy and continue processing tasks.
+    """
+    clean_env.api_json("POST", "/api/dev/priority/BeforeRestart?priority=2&sleep_ms=200")
+    clean_env.wait_for_priority_probe_started_count(1, timeout=60)
+
+    clean_env.restart_worker()
+
+    clean_env.api_json("POST", "/api/dev/priority/AfterRestart?priority=2&sleep_ms=200")
+    state = clean_env.wait_for_priority_probe_started_count(2, timeout=90)
+    started = state.get("started")
+    assert isinstance(started, list)
+    assert started[:2] == ["BeforeRestart", "AfterRestart"]
+    assert MAIN_QUEUE_NAME in clean_env.rabbitmq_queue_counts()

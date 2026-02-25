@@ -4,6 +4,7 @@ from celery.result import AsyncResult
 from fastapi import APIRouter, HTTPException, Query, Response
 from fastapi.responses import JSONResponse
 
+from PixivServer.config.celery import QUEUE_MAX_PRIORITY
 from PixivServer.models.pixiv_worker import DownloadArtworkByIdRequest
 from PixivServer.worker.dev import (
     dev_download_artworks_by_id,
@@ -47,7 +48,7 @@ async def dev_task_status(task_id: str) -> Response:
 @router.post("/priority/{label}")
 async def dev_queue_priority_probe_task(
     label: str,
-    priority: int = Query(default=2, ge=1, le=3),
+    priority: int = Query(default=2, ge=1, le=QUEUE_MAX_PRIORITY + 1),  # +1: allow one example of an over-limit value for clamping tests
     sleep_ms: int = Query(default=1000, ge=0, le=10000),
 ) -> Response:
     """

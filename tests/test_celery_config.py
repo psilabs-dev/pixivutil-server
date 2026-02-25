@@ -1,5 +1,7 @@
 from celery import Celery
 
+from PixivServer.config.celery import DLX_EXCHANGE_NAME, MAIN_QUEUE_NAME, QUEUE_MAX_PRIORITY
+
 
 def test_celery_failure_is_rejected_for_rabbitmq_dlq():
     app = Celery("pixivutil-test")
@@ -14,10 +16,10 @@ def test_main_queue_declares_dead_letter_exchange():
     app.config_from_object("PixivServer.config.celery")
 
     queues = {queue.name: queue for queue in app.conf.CELERY_QUEUES}
-    assert "pixivutil-queue" in queues
-    assert queues["pixivutil-queue"].queue_arguments == {
-        "x-dead-letter-exchange": "pixivutil-dlx",
-        "x-max-priority": 3,
+    assert MAIN_QUEUE_NAME in queues
+    assert queues[MAIN_QUEUE_NAME].queue_arguments == {
+        "x-dead-letter-exchange": DLX_EXCHANGE_NAME,
+        "x-max-priority": QUEUE_MAX_PRIORITY,
     }
 
 

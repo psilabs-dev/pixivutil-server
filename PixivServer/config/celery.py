@@ -2,27 +2,37 @@ from kombu import Exchange, Queue
 
 from PixivServer.config import rabbitmq
 
-default_exchange = Exchange('pixivutil-exchange', type='direct', durable=True, delivery_mode=2)
-dlx_exchange = Exchange('pixivutil-dlx', type='fanout', durable=True, delivery_mode=2)
+LEGACY_MAIN_EXCHANGE_NAME = "pixivutil-exchange"
+LEGACY_DLX_EXCHANGE_NAME = "pixivutil-dlx"
+LEGACY_MAIN_QUEUE_NAME = "pixivutil-queue"
+
+MAIN_EXCHANGE_NAME = "pixivutil-v1-exchange"
+DLX_EXCHANGE_NAME = "pixivutil-v1-dlx"
+MAIN_QUEUE_NAME = "pixivutil-v1-queue"
+MAIN_ROUTING_KEY = MAIN_QUEUE_NAME
+DEAD_LETTER_QUEUE_NAME = "pixivutil-v1-dead-letter"
+QUEUE_MAX_PRIORITY = 3
+
+default_exchange = Exchange(MAIN_EXCHANGE_NAME, type='direct', durable=True, delivery_mode=2)
+dlx_exchange = Exchange(DLX_EXCHANGE_NAME, type='fanout', durable=True, delivery_mode=2)
+main_queue = Queue(
+    name=MAIN_QUEUE_NAME,
+    exchange=default_exchange,
+    routing_key=MAIN_ROUTING_KEY,
+    durable=True,
+    queue_arguments={
+        'x-dead-letter-exchange': DLX_EXCHANGE_NAME,
+        'x-max-priority': QUEUE_MAX_PRIORITY,
+    },
+)
 dead_letter_queue = Queue(
-    name="pixivutil-dead-letter",
+    name=DEAD_LETTER_QUEUE_NAME,
     exchange=dlx_exchange,
     routing_key='',
     durable=True,
 )
 
-CELERY_QUEUES = (
-    Queue(
-        name="pixivutil-queue",
-        exchange=default_exchange,
-        routing_key='pixivutil-queue',
-        durable=True,
-        queue_arguments={
-            'x-dead-letter-exchange': 'pixivutil-dlx',
-            'x-max-priority': 3,
-        },
-    ),
-)
+CELERY_QUEUES = (main_queue,)
 
 BROKER_URL = rabbitmq.config.broker_url
 CELERY_ACKS_LATE = True

@@ -1,5 +1,7 @@
 import pytest
 
+from PixivServer.config.celery import DEAD_LETTER_QUEUE_NAME, MAIN_QUEUE_NAME
+
 
 def _attempt_history(state: dict) -> list[int]:
     history = state.get("attempt_history")
@@ -19,7 +21,7 @@ def test_dlq_resume_replays_native_celery_message(clean_env):
     task = clean_env.api_json("POST", "/api/dev/artwork/424242")
     task_id = task["task_id"]
 
-    clean_env.wait_for_queue_count("pixivutil-dead-letter", 1, timeout=60)
+    clean_env.wait_for_queue_count(DEAD_LETTER_QUEUE_NAME, 1, timeout=60)
     messages = clean_env.api_json("GET", "/api/queue/dead-letter/")
     assert len(messages) == 1
     message = messages[0]
@@ -40,7 +42,7 @@ def test_dlq_resume_replays_native_celery_message(clean_env):
 
     state = clean_env.wait_for_dev_task_terminal_state(task_id, "succeeded", timeout=90)
     assert _attempt_history(state) == [1, 2, 1, 2]
-    clean_env.wait_for_queue_count("pixivutil-dead-letter", 0, timeout=60)
+    clean_env.wait_for_queue_count(DEAD_LETTER_QUEUE_NAME, 0, timeout=60)
     assert clean_env.api_json("GET", "/api/queue/dead-letter/") == []
 
 
@@ -57,7 +59,7 @@ def test_dlq_resume_resets_retry_counter_for_replayed_native_celery_message(clea
     task = clean_env.api_json("POST", f"/api/dev/artwork/{artwork_id}")
     task_id = task["task_id"]
 
-    clean_env.wait_for_queue_count("pixivutil-dead-letter", 1, timeout=60)
+    clean_env.wait_for_queue_count(DEAD_LETTER_QUEUE_NAME, 1, timeout=60)
     before_state = clean_env.wait_for_dev_task_terminal_state(task_id, "failed", timeout=60)
     assert before_state["artwork_id"] == artwork_id
     assert _attempt_history(before_state) == [1, 2]
@@ -75,8 +77,8 @@ def test_dlq_resume_resets_retry_counter_for_replayed_native_celery_message(clea
 
     after_state = clean_env.wait_for_dev_task_terminal_state(task_id, "succeeded", timeout=90)
     assert _attempt_history(after_state) == [1, 2, 1, 2]
-    clean_env.wait_for_queue_count("pixivutil-queue", 0, timeout=90)
-    clean_env.wait_for_queue_count("pixivutil-dead-letter", 0, timeout=90)
+    clean_env.wait_for_queue_count(MAIN_QUEUE_NAME, 0, timeout=90)
+    clean_env.wait_for_queue_count(DEAD_LETTER_QUEUE_NAME, 0, timeout=90)
 
 
 @pytest.mark.pixiv_api
@@ -90,7 +92,7 @@ def test_dlq_resume_all_replays_multiple_native_celery_messages(clean_env):
     task_a = clean_env.api_json("POST", "/api/dev/artwork/111111")
     task_b = clean_env.api_json("POST", "/api/dev/artwork/222222")
 
-    clean_env.wait_for_queue_count("pixivutil-dead-letter", 2, timeout=90)
+    clean_env.wait_for_queue_count(DEAD_LETTER_QUEUE_NAME, 2, timeout=90)
     messages = clean_env.api_json("GET", "/api/queue/dead-letter/")
     assert len(messages) == 2
 
@@ -110,8 +112,8 @@ def test_dlq_resume_all_replays_multiple_native_celery_messages(clean_env):
 
     clean_env.wait_for_dev_task_terminal_state(task_a["task_id"], "succeeded", timeout=90)
     clean_env.wait_for_dev_task_terminal_state(task_b["task_id"], "succeeded", timeout=90)
-    clean_env.wait_for_queue_count("pixivutil-queue", 0, timeout=90)
-    clean_env.wait_for_queue_count("pixivutil-dead-letter", 0, timeout=90)
+    clean_env.wait_for_queue_count(MAIN_QUEUE_NAME, 0, timeout=90)
+    clean_env.wait_for_queue_count(DEAD_LETTER_QUEUE_NAME, 0, timeout=90)
     assert clean_env.api_json("GET", "/api/queue/dead-letter/") == []
 
 
@@ -127,7 +129,7 @@ def test_dlq_resume_all_resets_retry_counter_for_replayed_native_celery_messages
     task_a = clean_env.api_json("POST", f"/api/dev/artwork/{artwork_ids[0]}")
     task_b = clean_env.api_json("POST", f"/api/dev/artwork/{artwork_ids[1]}")
 
-    clean_env.wait_for_queue_count("pixivutil-dead-letter", 2, timeout=90)
+    clean_env.wait_for_queue_count(DEAD_LETTER_QUEUE_NAME, 2, timeout=90)
     before_state_a = clean_env.wait_for_dev_task_terminal_state(task_a["task_id"], "failed", timeout=90)
     before_state_b = clean_env.wait_for_dev_task_terminal_state(task_b["task_id"], "failed", timeout=90)
     assert _attempt_history(before_state_a) == [1, 2]
@@ -147,5 +149,5 @@ def test_dlq_resume_all_resets_retry_counter_for_replayed_native_celery_messages
     after_state_b = clean_env.wait_for_dev_task_terminal_state(task_b["task_id"], "succeeded", timeout=90)
     assert _attempt_history(after_state_a) == [1, 2, 1, 2]
     assert _attempt_history(after_state_b) == [1, 2, 1, 2]
-    clean_env.wait_for_queue_count("pixivutil-queue", 0, timeout=90)
-    clean_env.wait_for_queue_count("pixivutil-dead-letter", 0, timeout=90)
+    clean_env.wait_for_queue_count(MAIN_QUEUE_NAME, 0, timeout=90)
+    clean_env.wait_for_queue_count(DEAD_LETTER_QUEUE_NAME, 0, timeout=90)
