@@ -7,7 +7,11 @@ from fastapi.responses import JSONResponse
 from kombu import Connection
 
 from PixivServer.config import rabbitmq
-from PixivServer.config.celery import MAIN_ROUTING_KEY, dead_letter_queue, default_exchange
+from PixivServer.config.celery import (
+    MAIN_ROUTING_KEY,
+    dead_letter_queue,
+    default_exchange,
+)
 from PixivServer.worker import pixiv_worker
 
 logger = logging.getLogger('uvicorn.pixivutil')

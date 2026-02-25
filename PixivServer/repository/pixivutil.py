@@ -27,7 +27,7 @@ class PixivUtilRepository:
 
     def __init__(self):
         self.db_path = pixivutil_config.db_path
-        self.connection: sqlite3.Connection = None
+        self.connection: sqlite3.Connection = None  # pyright: ignore[reportAttributeAccessIssue] this will be handled during open.
 
     def open(self):
         self.connection = sqlite3.connect(self.db_path, timeout=30.0)
@@ -50,6 +50,7 @@ class PixivUtilRepository:
         Raises:
             KeyError: If member with the given ID is not found.
         """
+        cursor = None
         try:
             cursor = self.connection.cursor()
 
@@ -155,6 +156,7 @@ class PixivUtilRepository:
         Returns:
             List of member IDs. Empty list if no members found.
         """
+        cursor = None
         try:
             cursor = self.connection.cursor()
             cursor.execute("SELECT member_id FROM pixiv_master_member ORDER BY member_id ASC")
@@ -174,6 +176,7 @@ class PixivUtilRepository:
         Returns:
             List of image IDs. Empty list if no images found.
         """
+        cursor = None
         try:
             cursor = self.connection.cursor()
             cursor.execute("SELECT image_id FROM pixiv_master_image ORDER BY image_id ASC")
@@ -193,6 +196,7 @@ class PixivUtilRepository:
         Returns:
             List of tag IDs. Empty list if no tags found.
         """
+        cursor = None
         try:
             cursor = self.connection.cursor()
             cursor.execute("SELECT tag_id FROM pixiv_master_tag ORDER BY tag_id ASC")
@@ -212,6 +216,7 @@ class PixivUtilRepository:
         Returns:
             List of series IDs. Empty list if no series found.
         """
+        cursor = None
         try:
             cursor = self.connection.cursor()
             cursor.execute("SELECT series_id FROM pixiv_master_series ORDER BY series_id ASC")
@@ -231,6 +236,7 @@ class PixivUtilRepository:
         Raises:
             KeyError: If tag with the given ID is not found.
         """
+        cursor = None
         try:
             cursor = self.connection.cursor()
 
@@ -305,6 +311,7 @@ class PixivUtilRepository:
         Raises:
             KeyError: If series with the given ID is not found.
         """
+        cursor = None
         try:
             cursor = self.connection.cursor()
 
@@ -365,6 +372,7 @@ class PixivUtilRepository:
         Raises:
             KeyError: If image with the given ID is not found.
         """
+        cursor = None
         try:
             cursor = self.connection.cursor()
 

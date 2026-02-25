@@ -18,9 +18,9 @@ import PixivServer
 # import PixivServer.routers.subscription
 import PixivServer.service
 import PixivServer.service.pixiv
+from PixivServer.config.celery import DEAD_LETTER_QUEUE_NAME, MAIN_QUEUE_NAME
 from PixivServer.config.pixivutil import config as pixivutil_config
 from PixivServer.config.rabbitmq import config as rabbitmq_config
-from PixivServer.config.celery import DEAD_LETTER_QUEUE_NAME, MAIN_QUEUE_NAME
 from PixivServer.metrics import (
     DB_ARTWORKS,
     DB_MEMBERS,
