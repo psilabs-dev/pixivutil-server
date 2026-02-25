@@ -20,7 +20,7 @@ import PixivServer.service
 import PixivServer.service.pixiv
 from PixivServer.config.pixivutil import config as pixivutil_config
 from PixivServer.config.rabbitmq import config as rabbitmq_config
-from PixivServer.config.celery import MAIN_QUEUE_NAME
+from PixivServer.config.celery import DEAD_LETTER_QUEUE_NAME, MAIN_QUEUE_NAME
 from PixivServer.metrics import (
     DB_ARTWORKS,
     DB_MEMBERS,
@@ -29,6 +29,7 @@ from PixivServer.metrics import (
     DB_TAGS,
     DISK_DATABASE_BYTES,
     DISK_DOWNLOADS_BYTES,
+    DLQ_DEPTH,
     QUEUE_DEPTH,
     SYS_CPU_PERCENT,
     SYS_DISK_TOTAL_BYTES,
@@ -91,7 +92,7 @@ def _collect_disk_metrics() -> None:
     DISK_DOWNLOADS_BYTES.set(total)
 
 
-def _collect_queue_depth() -> None:
+def _rabbitmq_queue_message_count(queue_name: str) -> int | None:
     parsed = urlparse(rabbitmq_config.broker_url)
     user = parsed.username or "guest"
     password = parsed.password or "guest"
@@ -99,15 +100,27 @@ def _collect_queue_depth() -> None:
     raw_vhost = parsed.path.lstrip("/")
     vhost = raw_vhost if raw_vhost else "/"
     encoded_vhost = quote(vhost, safe="")
-    url = f"http://{host}:15672/api/queues/{encoded_vhost}/{MAIN_QUEUE_NAME}" # TODO: if rabbitmq management layer isn't set up, then we have a problem.
+    url = f"http://{host}:15672/api/queues/{encoded_vhost}/{queue_name}"  # TODO: if rabbitmq management layer isn't set up, then we have a problem.
     credentials = base64.b64encode(f"{user}:{password}".encode()).decode()
     req = urllib.request.Request(url, headers={"Authorization": f"Basic {credentials}"})
     try:
         with urllib.request.urlopen(req, timeout=5) as resp:
             data = json.loads(resp.read())
-            QUEUE_DEPTH.set(data.get("messages", 0))
+            return int(data.get("messages", 0))
     except (urllib.error.URLError, OSError, ValueError):
-        pass  # Management API unavailable; leave metric stale
+        return None  # Management API unavailable
+
+
+def _collect_queue_depth() -> None:
+    count = _rabbitmq_queue_message_count(MAIN_QUEUE_NAME)
+    if count is not None:
+        QUEUE_DEPTH.set(count)
+
+
+def _collect_dlq_depth() -> None:
+    count = _rabbitmq_queue_message_count(DEAD_LETTER_QUEUE_NAME)
+    if count is not None:
+        DLQ_DEPTH.set(count)
 
 
 async def periodic_metrics_collector() -> None:
@@ -129,6 +142,7 @@ async def periodic_metrics_collector() -> None:
                 last_disk = time.monotonic()
             if now - last_queue >= _QUEUE_COLLECT_INTERVAL:
                 await asyncio.to_thread(_collect_queue_depth)
+                await asyncio.to_thread(_collect_dlq_depth)
                 last_queue = time.monotonic()
         except Exception:  # noqa: BLE001
             logger.warning(f"Metrics collector error: {traceback.format_exc()}")

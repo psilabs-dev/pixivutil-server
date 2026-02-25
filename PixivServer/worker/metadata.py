@@ -43,7 +43,7 @@ def download_member_metadata_by_id(self, request_dict: dict):
         )
         PixivServer.service.pixiv.service.download_member_metadata_by_id(request)
         return True
-    except Exception as e:
+    except Exception as e:  # noqa: BLE001
         logger.error(f"Error in download_member_metadata_by_id worker: {str(e)}")
         logger.error(traceback.format_exc())
         if _is_network_exception(e):
@@ -63,7 +63,7 @@ def download_artwork_metadata_by_id(self, request_dict: dict):
         )
         PixivServer.service.pixiv.service.download_artwork_metadata_by_id(request)
         return True
-    except Exception as e:
+    except Exception as e:  # noqa: BLE001
         logger.error(f"Error in download_artwork_metadata_by_id worker: {str(e)}")
         logger.error(traceback.format_exc())
         if _is_network_exception(e):
@@ -83,7 +83,7 @@ def download_series_metadata_by_id(self, request_dict: dict):
         )
         PixivServer.service.pixiv.service.download_series_metadata_by_id(request)
         return True
-    except Exception as e:
+    except Exception as e:  # noqa: BLE001
         logger.error(f"Error in download_series_metadata_by_id worker: {str(e)}")
         logger.error(traceback.format_exc())
         if _is_network_exception(e):
@@ -103,7 +103,7 @@ def download_tag_metadata_by_id(self, request_dict: dict):
         )
         PixivServer.service.pixiv.service.download_tag_metadata_by_id(request)
         return True
-    except Exception as e:
+    except Exception as e:  # noqa: BLE001
         logger.error(f"Error in download_tag_metadata_by_id worker: {str(e)}")
         logger.error(traceback.format_exc())
         if _is_network_exception(e):
