@@ -34,6 +34,9 @@ def download_artworks_by_id(self, request_dict: dict):
         logger.error(traceback.format_exc())
         if is_network_exception(e):
             raise self.retry(exc=e, countdown=NETWORK_RETRY_COUNTDOWN)
+        # TODO: non-network errors return False (acked as SUCCESS) to avoid DLQ routing.
+        # Use per-task acks_on_failure_or_timeout=True + Reject(requeue=False) for network
+        # exhaustion so non-network errors can raise normally and show as FAILURE.
         return False
     finally:
         job_sleep()
@@ -51,6 +54,7 @@ def download_artworks_by_member_id(self, request_dict: dict):
         logger.error(traceback.format_exc())
         if is_network_exception(e):
             raise self.retry(exc=e, countdown=NETWORK_RETRY_COUNTDOWN)
+        # TODO: see download_artworks_by_id for non-network error handling fix.
         return False
     finally:
         job_sleep()
@@ -68,6 +72,7 @@ def download_artworks_by_tag(self, request_dict: dict):
         logger.error(traceback.format_exc())
         if is_network_exception(e):
             raise self.retry(exc=e, countdown=NETWORK_RETRY_COUNTDOWN)
+        # TODO: see download_artworks_by_id for non-network error handling fix.
         return False
     finally:
         job_sleep()
@@ -85,6 +90,7 @@ def delete_artwork_by_id(self, request_dict: dict):
         logger.error(traceback.format_exc())
         if is_network_exception(e):
             raise self.retry(exc=e, countdown=NETWORK_RETRY_COUNTDOWN)
+        # TODO: see download_artworks_by_id for non-network error handling fix.
         return False
     finally:
         job_sleep()

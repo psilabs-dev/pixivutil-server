@@ -37,6 +37,9 @@ def download_member_metadata_by_id(self, request_dict: dict):
         logger.error(traceback.format_exc())
         if is_network_exception(e):
             raise self.retry(exc=e, countdown=NETWORK_RETRY_COUNTDOWN)
+        # TODO: non-network errors return False (acked as SUCCESS) to avoid DLQ routing.
+        # Use per-task acks_on_failure_or_timeout=True + Reject(requeue=False) for network
+        # exhaustion so non-network errors can raise normally and show as FAILURE.
         return False
     finally:
         job_sleep()
@@ -57,6 +60,7 @@ def download_artwork_metadata_by_id(self, request_dict: dict):
         logger.error(traceback.format_exc())
         if is_network_exception(e):
             raise self.retry(exc=e, countdown=NETWORK_RETRY_COUNTDOWN)
+        # TODO: see download_member_metadata_by_id for non-network error handling fix.
         return False
     finally:
         job_sleep()
@@ -77,6 +81,7 @@ def download_series_metadata_by_id(self, request_dict: dict):
         logger.error(traceback.format_exc())
         if is_network_exception(e):
             raise self.retry(exc=e, countdown=NETWORK_RETRY_COUNTDOWN)
+        # TODO: see download_member_metadata_by_id for non-network error handling fix.
         return False
     finally:
         job_sleep()
@@ -97,6 +102,7 @@ def download_tag_metadata_by_id(self, request_dict: dict):
         logger.error(traceback.format_exc())
         if is_network_exception(e):
             raise self.retry(exc=e, countdown=NETWORK_RETRY_COUNTDOWN)
+        # TODO: see download_member_metadata_by_id for non-network error handling fix.
         return False
     finally:
         job_sleep()
