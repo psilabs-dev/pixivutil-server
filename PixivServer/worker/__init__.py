@@ -2,12 +2,13 @@ import logging
 
 from celery import Celery
 from celery.signals import setup_logging, worker_init, worker_shutdown
-from kombu import Queue
+from kombu import Exchange, Queue
 
 import PixivServer
 import PixivServer.service
 import PixivServer.service.pixiv
 from PixivServer.config.celery import (
+    LEGACY_MAIN_EXCHANGE_NAME,
     LEGACY_MAIN_QUEUE_NAME,
     dead_letter_queue,
     main_queue,
@@ -24,6 +25,7 @@ pixiv_worker.config_from_object('PixivServer.config.celery')
 def on_worker_init(sender, **kwargs):
     with sender.app.connection() as conn:
         _cleanup_legacy_queue(conn, LEGACY_MAIN_QUEUE_NAME)
+        _cleanup_legacy_exchange(conn, LEGACY_MAIN_EXCHANGE_NAME)
         main_queue.bind(conn).declare()
         dead_letter_queue.bind(conn).declare()
     PixivServer.service.pixiv.service.open()
@@ -54,6 +56,16 @@ def _cleanup_legacy_queue(conn, queue_name: str) -> None:
     except Exception as exc:  # noqa: BLE001
         if "NOT_FOUND" not in str(exc):
             logger.warning(f"Failed to delete legacy queue {queue_name}: {exc}")
+
+
+def _cleanup_legacy_exchange(conn, exchange_name: str) -> None:
+    exchange = Exchange(exchange_name, type='direct', durable=True).bind(conn)
+    try:
+        exchange.delete()
+        logger.warning(f"Deleted legacy exchange during v1 broker cutover: {exchange_name}")
+    except Exception as exc:  # noqa: BLE001
+        if "NOT_FOUND" not in str(exc):
+            logger.warning(f"Failed to delete legacy exchange {exchange_name}: {exc}")
 
 
 # @celery.on_after_configure.connect
