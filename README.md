@@ -48,6 +48,11 @@ For example, the server supports the following endpoints:
 - Get tag metadata by ID
 - Get series metadata by ID
 
+#### [Dead letter queue (DLQ)](/docs/api/dlq.md)
+
+API endpoints to inspect, replay, and purge failed worker messages in the dead
+letter queue.
+
 #### [Download queueing](/docs/api/download.md)
 
 API endpoints to queue content (artwork) downloads for worker from server.

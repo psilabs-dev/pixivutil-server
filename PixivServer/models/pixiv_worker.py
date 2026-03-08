@@ -2,12 +2,23 @@
 Model layer for PixivUtil worker queue processing interface.
 """
 
+from typing import Any, Protocol, cast
+
+from celery.result import AsyncResult
 from pixivutil_server_common.models import (
     TagMetadataFilterMode,
     TagSortOrder,
     TagTypeMode,
 )
 from pydantic import BaseModel
+
+
+class CeleryTask(Protocol):
+    def apply_async(self, *, args: list[Any] | None = None, priority: int | None = None, **kwargs: Any) -> AsyncResult: ...
+
+
+def as_celery_task(task: Any) -> CeleryTask:
+    return cast(CeleryTask, task)
 
 
 class DownloadArtworkByIdRequest(BaseModel):
