@@ -1,9 +1,5 @@
 import logging
-import os
-import random
-import time
 import traceback
-from urllib.error import URLError
 
 from celery import shared_task
 
@@ -16,30 +12,17 @@ from PixivServer.models.pixiv_worker import (
     DownloadArtworksByTagsRequest,
     as_celery_task,
 )
-from PixivServer.service.pixiv import PixivException
+from PixivServer.worker.common import (
+    NETWORK_MAX_RETRIES,
+    NETWORK_RETRY_COUNTDOWN,
+    is_network_exception,
+    job_sleep,
+)
 
 logger = logging.getLogger(__name__)
 
-_NETWORK_MAX_RETRIES = int(os.getenv("PIXIVUTIL_WORKER_NETWORK_MAX_RETRIES", "3"))
-_NETWORK_RETRY_COUNTDOWN = int(os.getenv("PIXIVUTIL_WORKER_NETWORK_RETRY_COUNTDOWN", "60"))
-_JOB_SLEEP_MIN_MS = int(os.getenv("PIXIVUTIL_WORKER_JOB_SLEEP_MIN_MS", "1000"))
-_JOB_SLEEP_MAX_MS = int(os.getenv("PIXIVUTIL_WORKER_JOB_SLEEP_MAX_MS", "5000"))
 
-
-def __job_sleep():
-    lower_ms = min(_JOB_SLEEP_MIN_MS, _JOB_SLEEP_MAX_MS)
-    upper_ms = max(_JOB_SLEEP_MIN_MS, _JOB_SLEEP_MAX_MS)
-    time.sleep(random.uniform(lower_ms, upper_ms) / 1000)
-    return 0
-
-
-def _is_network_exception(exc: BaseException) -> bool:
-    if isinstance(exc, PixivException):
-        return exc.errorCode in (PixivException.DOWNLOAD_FAILED_NETWORK, PixivException.SERVER_ERROR)
-    return isinstance(exc, (ConnectionError, TimeoutError, URLError))
-
-
-@shared_task(bind=True, name="download_artworks_by_id", queue=MAIN_QUEUE_NAME, max_retries=_NETWORK_MAX_RETRIES)
+@shared_task(bind=True, name="download_artworks_by_id", queue=MAIN_QUEUE_NAME, max_retries=NETWORK_MAX_RETRIES)
 def download_artworks_by_id(self, request_dict: dict):
     try:
         request = DownloadArtworkByIdRequest(**request_dict)
@@ -49,14 +32,14 @@ def download_artworks_by_id(self, request_dict: dict):
     except Exception as e:  # noqa: BLE001
         logger.error(f"Error in download_artworks_by_id worker: {str(e)}")
         logger.error(traceback.format_exc())
-        if _is_network_exception(e):
-            raise self.retry(exc=e, countdown=_NETWORK_RETRY_COUNTDOWN)
+        if is_network_exception(e):
+            raise self.retry(exc=e, countdown=NETWORK_RETRY_COUNTDOWN)
         return False
     finally:
-        __job_sleep()
+        job_sleep()
 
 
-@shared_task(bind=True, name="download_artworks_by_member_id", queue=MAIN_QUEUE_NAME, max_retries=_NETWORK_MAX_RETRIES)
+@shared_task(bind=True, name="download_artworks_by_member_id", queue=MAIN_QUEUE_NAME, max_retries=NETWORK_MAX_RETRIES)
 def download_artworks_by_member_id(self, request_dict: dict):
     try:
         request = DownloadArtworksByMemberIdRequest(**request_dict)
@@ -66,14 +49,14 @@ def download_artworks_by_member_id(self, request_dict: dict):
     except Exception as e:  # noqa: BLE001
         logger.error(f"Error in download_artworks_by_member_id worker: {str(e)}")
         logger.error(traceback.format_exc())
-        if _is_network_exception(e):
-            raise self.retry(exc=e, countdown=_NETWORK_RETRY_COUNTDOWN)
+        if is_network_exception(e):
+            raise self.retry(exc=e, countdown=NETWORK_RETRY_COUNTDOWN)
         return False
     finally:
-        __job_sleep()
+        job_sleep()
 
 
-@shared_task(bind=True, name="download_artworks_by_tag", queue=MAIN_QUEUE_NAME, max_retries=_NETWORK_MAX_RETRIES)
+@shared_task(bind=True, name="download_artworks_by_tag", queue=MAIN_QUEUE_NAME, max_retries=NETWORK_MAX_RETRIES)
 def download_artworks_by_tag(self, request_dict: dict):
     try:
         request = DownloadArtworksByTagsRequest(**request_dict)
@@ -83,14 +66,14 @@ def download_artworks_by_tag(self, request_dict: dict):
     except Exception as e:  # noqa: BLE001
         logger.error(f"Error in download_artworks_by_tag worker: {str(e)}")
         logger.error(traceback.format_exc())
-        if _is_network_exception(e):
-            raise self.retry(exc=e, countdown=_NETWORK_RETRY_COUNTDOWN)
+        if is_network_exception(e):
+            raise self.retry(exc=e, countdown=NETWORK_RETRY_COUNTDOWN)
         return False
     finally:
-        __job_sleep()
+        job_sleep()
 
 
-@shared_task(bind=True, name="delete_artwork_by_id", queue=MAIN_QUEUE_NAME, max_retries=_NETWORK_MAX_RETRIES)
+@shared_task(bind=True, name="delete_artwork_by_id", queue=MAIN_QUEUE_NAME, max_retries=NETWORK_MAX_RETRIES)
 def delete_artwork_by_id(self, request_dict: dict):
     try:
         request = DeleteArtworkByIdRequest(**request_dict)
@@ -100,11 +83,11 @@ def delete_artwork_by_id(self, request_dict: dict):
     except Exception as e:  # noqa: BLE001
         logger.error(f"Error in delete_artwork_by_id worker: {str(e)}")
         logger.error(traceback.format_exc())
-        if _is_network_exception(e):
-            raise self.retry(exc=e, countdown=_NETWORK_RETRY_COUNTDOWN)
+        if is_network_exception(e):
+            raise self.retry(exc=e, countdown=NETWORK_RETRY_COUNTDOWN)
         return False
     finally:
-        __job_sleep()
+        job_sleep()
 
 
 download_artworks_by_id_task = as_celery_task(download_artworks_by_id)

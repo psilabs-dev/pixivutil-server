@@ -105,12 +105,6 @@ class PixivUtilService:
 
         if pixivutil_config.cookie:
             __config__.cookie = pixivutil_config.cookie
-        pixiv_retry = os.getenv("PIXIVUTIL2_NETWORK_RETRY")
-        if pixiv_retry is not None:
-            __config__.retry = int(pixiv_retry)
-        pixiv_retry_wait = os.getenv("PIXIVUTIL2_NETWORK_RETRY_WAIT")
-        if pixiv_retry_wait is not None:
-            __config__.retryWait = int(pixiv_retry_wait)
 
         return
 
