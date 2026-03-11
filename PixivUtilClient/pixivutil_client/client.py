@@ -8,6 +8,11 @@ import aiohttp
 
 from pixivutil_client.exceptions import PixivAPIError, PixivTransportError
 from pixivutil_client.models import (
+    DeadLetterDropAllResponse,
+    DeadLetterDropResponse,
+    DeadLetterMessage,
+    DeadLetterResumeAllResponse,
+    DeadLetterResumeResponse,
     PixivImageComplete,
     PixivMemberPortfolio,
     PixivSeriesInfo,
@@ -123,12 +128,18 @@ class PixivAsyncClient:
         payload = await self._request("GET", "/api/health/pixiv")
         return str(payload)
 
-    async def queue_download_artwork(self, artwork_id: int) -> QueueTaskResponse:
-        payload = await self._request("POST", f"/api/queue/download/artwork/{artwork_id}")
+    async def queue_download_artwork(self, artwork_id: int, *, priority: int | None = None) -> QueueTaskResponse:
+        params: dict[str, Any] = {}
+        if priority is not None:
+            params["priority"] = priority
+        payload = await self._request("POST", f"/api/queue/download/artwork/{artwork_id}", params=params or None)
         return QueueTaskResponse.model_validate(payload)
 
-    async def queue_download_member(self, member_id: int) -> QueueTaskResponse:
-        payload = await self._request("POST", f"/api/queue/download/member/{member_id}")
+    async def queue_download_member(self, member_id: int, *, priority: int | None = None) -> QueueTaskResponse:
+        params: dict[str, Any] = {}
+        if priority is not None:
+            params["priority"] = priority
+        payload = await self._request("POST", f"/api/queue/download/member/{member_id}", params=params or None)
         return QueueTaskResponse.model_validate(payload)
 
     async def queue_download_tag(
@@ -142,6 +153,7 @@ class PixivAsyncClient:
         start_date: str | None = None,
         end_date: str | None = None,
         lookback_days: int | None = None,
+        priority: int | None = None,
     ) -> QueueTaskResponse:
         params: dict[str, Any] = {
             "sort_order": sort_order,
@@ -156,41 +168,66 @@ class PixivAsyncClient:
             params["end_date"] = end_date
         if lookback_days is not None:
             params["lookback_days"] = lookback_days
+        if priority is not None:
+            params["priority"] = priority
 
         encoded_tag = quote(tag, safe="")
         payload = await self._request("POST", f"/api/queue/download/tag/{encoded_tag}", params=params)
         return QueueTaskResponse.model_validate(payload)
 
-    async def queue_delete_artwork(self, artwork_id: int, delete_metadata: bool = True) -> QueueTaskResponse:
+    async def queue_delete_artwork(
+        self,
+        artwork_id: int,
+        delete_metadata: bool = True,
+        *,
+        priority: int | None = None,
+    ) -> QueueTaskResponse:
+        params: dict[str, Any] = {"delete_metadata": str(delete_metadata).lower()}
+        if priority is not None:
+            params["priority"] = priority
         payload = await self._request(
             "DELETE",
             f"/api/queue/download/artwork/{artwork_id}",
-            params={"delete_metadata": str(delete_metadata).lower()},
+            params=params,
         )
         return QueueTaskResponse.model_validate(payload)
 
-    async def queue_metadata_artwork(self, artwork_id: int) -> QueueTaskResponse:
-        payload = await self._request("POST", f"/api/queue/metadata/artwork/{artwork_id}")
+    async def queue_metadata_artwork(self, artwork_id: int, *, priority: int | None = None) -> QueueTaskResponse:
+        params: dict[str, Any] = {}
+        if priority is not None:
+            params["priority"] = priority
+        payload = await self._request("POST", f"/api/queue/metadata/artwork/{artwork_id}", params=params or None)
         return QueueTaskResponse.model_validate(payload)
 
-    async def queue_metadata_member(self, member_id: int) -> QueueTaskResponse:
-        payload = await self._request("POST", f"/api/queue/metadata/member/{member_id}")
+    async def queue_metadata_member(self, member_id: int, *, priority: int | None = None) -> QueueTaskResponse:
+        params: dict[str, Any] = {}
+        if priority is not None:
+            params["priority"] = priority
+        payload = await self._request("POST", f"/api/queue/metadata/member/{member_id}", params=params or None)
         return QueueTaskResponse.model_validate(payload)
 
-    async def queue_metadata_series(self, series_id: int) -> QueueTaskResponse:
-        payload = await self._request("POST", f"/api/queue/metadata/series/{series_id}")
+    async def queue_metadata_series(self, series_id: int, *, priority: int | None = None) -> QueueTaskResponse:
+        params: dict[str, Any] = {}
+        if priority is not None:
+            params["priority"] = priority
+        payload = await self._request("POST", f"/api/queue/metadata/series/{series_id}", params=params or None)
         return QueueTaskResponse.model_validate(payload)
 
     async def queue_metadata_tag(
         self,
         tag: str,
         filter_mode: TagMetadataFilterMode = "none",
+        *,
+        priority: int | None = None,
     ) -> QueueTaskResponse:
+        params: dict[str, Any] = {"filter_mode": filter_mode}
+        if priority is not None:
+            params["priority"] = priority
         encoded_tag = quote(tag, safe="")
         payload = await self._request(
             "POST",
             f"/api/queue/metadata/tag/{encoded_tag}",
-            params={"filter_mode": filter_mode},
+            params=params,
         )
         return QueueTaskResponse.model_validate(payload)
 
@@ -243,3 +280,25 @@ class PixivAsyncClient:
     async def reset_downloads(self) -> str:
         payload = await self._request("DELETE", "/api/server/downloads")
         return str(payload)
+
+    async def list_dead_letter_messages(self) -> list[DeadLetterMessage]:
+        payload = await self._request("GET", "/api/queue/dead-letter/")
+        return [DeadLetterMessage.model_validate(item) for item in payload]
+
+    async def resume_all_dead_letter_messages(self) -> DeadLetterResumeAllResponse:
+        payload = await self._request("POST", "/api/queue/dead-letter/resume")
+        return DeadLetterResumeAllResponse.model_validate(payload)
+
+    async def resume_dead_letter_message(self, dead_letter_id: str) -> DeadLetterResumeResponse:
+        encoded_dead_letter_id = quote(dead_letter_id, safe="")
+        payload = await self._request("POST", f"/api/queue/dead-letter/{encoded_dead_letter_id}/resume")
+        return DeadLetterResumeResponse.model_validate(payload)
+
+    async def drop_all_dead_letter_messages(self) -> DeadLetterDropAllResponse:
+        payload = await self._request("DELETE", "/api/queue/dead-letter/")
+        return DeadLetterDropAllResponse.model_validate(payload)
+
+    async def drop_dead_letter_message(self, dead_letter_id: str) -> DeadLetterDropResponse:
+        encoded_dead_letter_id = quote(dead_letter_id, safe="")
+        payload = await self._request("DELETE", f"/api/queue/dead-letter/{encoded_dead_letter_id}")
+        return DeadLetterDropResponse.model_validate(payload)

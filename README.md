@@ -48,6 +48,11 @@ For example, the server supports the following endpoints:
 - Get tag metadata by ID
 - Get series metadata by ID
 
+#### [Dead letter queue (DLQ)](/docs/api/dlq.md)
+
+API endpoints to inspect, replay, and purge failed worker messages in the dead
+letter queue.
+
 #### [Download queueing](/docs/api/download.md)
 
 API endpoints to queue content (artwork) downloads for worker from server.
@@ -104,6 +109,8 @@ Authorization: Bearer <your-api-key>
 ```
 
 ## Architecture and Development
+
+When running PixivUtil server in development, set `PIXIVUTIL_SERVER_ENV=development`. This will enable debug logging level.
 
 PixivUtil server is a Python project based on PixivUtil2 as its API client engine. PixivUtil2 is a separate git repository added to this as a submodule.
 

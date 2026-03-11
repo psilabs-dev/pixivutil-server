@@ -3,6 +3,11 @@ Compatibility module re-exporting shared API contracts.
 """
 
 from pixivutil_server_common.models import (
+    DeadLetterDropAllResponse,
+    DeadLetterDropResponse,
+    DeadLetterMessage,
+    DeadLetterResumeAllResponse,
+    DeadLetterResumeResponse,
     PixivDateInfo,
     PixivImageComplete,
     PixivImageToSeries,
@@ -23,6 +28,11 @@ from pixivutil_server_common.models import (
 )
 
 __all__ = [
+    "DeadLetterDropAllResponse",
+    "DeadLetterDropResponse",
+    "DeadLetterMessage",
+    "DeadLetterResumeAllResponse",
+    "DeadLetterResumeResponse",
     "PixivDateInfo",
     "PixivImageComplete",
     "PixivImageToSeries",
