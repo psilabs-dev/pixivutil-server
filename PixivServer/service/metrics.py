@@ -110,8 +110,9 @@ def _rabbitmq_queue_message_count(queue_name: str) -> int | None:
         with urllib.request.urlopen(req, timeout=5) as resp:
             data = json.loads(resp.read())
             return int(data.get("messages", 0))
-    except (urllib.error.URLError, OSError, ValueError):
-        return None  # Management API unavailable
+    except (urllib.error.URLError, OSError, ValueError) as exc:
+        logger.warning("RabbitMQ management API unreachable for queue %s: %s", queue_name, exc)
+        return None
 
 
 def _collect_queue_depth() -> None:
