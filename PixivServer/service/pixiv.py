@@ -345,6 +345,7 @@ class PixivUtilService:
 
             if request.delete_metadata:
                 cursor.execute("DELETE FROM pixiv_date_info WHERE image_id = ?", (request.artwork_id,))
+                cursor.execute("DELETE FROM pixiv_stats WHERE image_id = ?", (request.artwork_id,))
                 cursor.execute("DELETE FROM pixiv_ai_info WHERE image_id = ?", (request.artwork_id,))
                 cursor.execute("DELETE FROM pixiv_image_to_series WHERE image_id = ?", (request.artwork_id,))
                 PixivHelper.print_and_log("info", f"Deleted artwork and metadata from database: {request.artwork_id}")

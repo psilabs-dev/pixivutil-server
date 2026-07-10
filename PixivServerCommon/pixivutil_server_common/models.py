@@ -90,6 +90,17 @@ class PixivDateInfo(BaseModel):
     last_update_date: str
 
 
+class PixivStats(BaseModel):
+    image_id: int
+    view_count: int
+    like_count: int
+    bookmark_count: int
+    comment_count: int
+    response_count: int
+    created_date: str
+    last_update_date: str
+
+
 class PixivTagTranslation(BaseModel):
     tag_id: str
     translation_type: str
@@ -134,6 +145,7 @@ class PixivImageComplete(BaseModel):
     series: tuple[PixivImageToSeries, PixivMasterSeries] | None = Field(None)
     tags: list[tuple[PixivImageToTag, PixivMasterTag, PixivTagTranslation | None]]
     dates: PixivDateInfo | None = Field(None)
+    stats: PixivStats | None = Field(None)
 
 
 class PixivTagInfo(BaseModel):

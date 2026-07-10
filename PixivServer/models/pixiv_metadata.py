@@ -14,6 +14,7 @@ from pixivutil_server_common.models import (
     PixivMasterTag,
     PixivMemberPortfolio,
     PixivSeriesInfo,
+    PixivStats,
     PixivTagInfo,
     PixivTagTranslation,
 )
@@ -30,6 +31,7 @@ __all__ = [
     "PixivMasterTag",
     "PixivMemberPortfolio",
     "PixivSeriesInfo",
+    "PixivStats",
     "PixivTagInfo",
     "PixivTagTranslation",
 ]

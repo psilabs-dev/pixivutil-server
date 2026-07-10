@@ -160,7 +160,7 @@ async def queue_delete_artwork_by_id(
 
     Args:
         artwork_id: The Pixiv artwork ID to delete
-        delete_metadata: If True (default), also deletes metadata (date_info, ai_info, series).
+        delete_metadata: If True (default), also deletes metadata (date_info, stats, ai_info, series).
                         If False, only deletes artwork files and basic records.
 
     This is a queue operation as it operates on a sqlite database.
