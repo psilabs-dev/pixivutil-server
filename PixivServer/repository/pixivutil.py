@@ -103,6 +103,9 @@ class PixivUtilRepository:
             ]
 
             return PixivMemberPortfolio(member=member, images=images)
+        except KeyError:
+            # Expected when the member is not yet in the DB; let the caller decide.
+            raise
         except Exception as e:
             logger.error(f"Error getting member data for {member_id}: {e}")
             raise
@@ -563,6 +566,9 @@ class PixivUtilRepository:
                 dates=dates,
                 stats=stats
             )
+        except KeyError:
+            # Expected when the image (or its member) is not yet in the DB; let the caller decide.
+            raise
         except Exception as e:
             logger.error(f"Error getting image data for {image_id}: {e}")
             raise
