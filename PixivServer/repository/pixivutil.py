@@ -14,6 +14,7 @@ from PixivServer.models.pixiv_metadata import (
     PixivMasterTag,
     PixivMemberPortfolio,
     PixivSeriesInfo,
+    PixivStats,
     PixivTagInfo,
     PixivTagTranslation,
 )
@@ -102,6 +103,9 @@ class PixivUtilRepository:
             ]
 
             return PixivMemberPortfolio(member=member, images=images)
+        except KeyError:
+            # Expected when the member is not yet in the DB; let the caller decide.
+            raise
         except Exception as e:
             logger.error(f"Error getting member data for {member_id}: {e}")
             raise
@@ -531,14 +535,40 @@ class PixivUtilRepository:
                     last_update_date=date_row[4]
                 )
 
+            # Get server-mode engagement stats
+            cursor.execute(
+                """SELECT image_id, view_count, like_count, bookmark_count,
+                          comment_count, response_count, created_date, last_update_date
+                   FROM pixiv_stats
+                   WHERE image_id = ?""",
+                (image_id,)
+            )
+            stats_row = cursor.fetchone()
+            stats = None
+            if stats_row is not None:
+                stats = PixivStats(
+                    image_id=stats_row[0],
+                    view_count=stats_row[1],
+                    like_count=stats_row[2],
+                    bookmark_count=stats_row[3],
+                    comment_count=stats_row[4],
+                    response_count=stats_row[5],
+                    created_date=stats_row[6],
+                    last_update_date=stats_row[7]
+                )
+
             return PixivImageComplete(
                 image=image,
                 member=member,
                 pages=pages,
                 series=series,
                 tags=tags,
-                dates=dates
+                dates=dates,
+                stats=stats
             )
+        except KeyError:
+            # Expected when the image (or its member) is not yet in the DB; let the caller decide.
+            raise
         except Exception as e:
             logger.error(f"Error getting image data for {image_id}: {e}")
             raise
