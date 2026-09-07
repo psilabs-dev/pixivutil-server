@@ -68,8 +68,12 @@ async def request_metrics_middleware(request: Request, call_next):
     response = await call_next(request)
     duration = time.perf_counter() - start
 
+    # fastapi >= 0.137 no longer flattens included routers, so scope["route"] is the inner
+    # APIRoute and its .path has lost the include_router() prefix. The full path lives on the
+    # effective route context. Drop this once https://github.com/fastapi/fastapi/issues/16176 lands.
+    ctx = (request.scope.get("fastapi") or {}).get("effective_route_context")
     route = request.scope.get("route")
-    endpoint = route.path if route and hasattr(route, "path") else None
+    endpoint = getattr(ctx, "path", None) or getattr(route, "path", None)
     if endpoint is None:
         return response
     status_class = f"{response.status_code // 100}xx"
