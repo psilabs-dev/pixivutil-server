@@ -8,9 +8,13 @@ Authentication:
 
 Get the cookie in use.
 
-`PUT /api/server/cookie/{cookie}`
+`PUT /api/server/cookie`
 
-Update the cookie.
+Update the cookie. The cookie is sent in the JSON request body, so it does not end up in URLs or access logs.
+
+```json
+{"cookie": "<your-pixiv-cookie>"}
+```
 
 `DELETE /api/server/database`
 
@@ -19,3 +23,5 @@ Reset the database.
 `DELETE /api/server/downloads`
 
 Delete the downloads folder.
+
+> Compatibility note: `PUT /api/server/cookie/{cookie}` is still available but deprecated. Use `PUT /api/server/cookie` with a request body instead.

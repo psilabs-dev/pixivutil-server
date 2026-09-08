@@ -22,8 +22,7 @@ Build and run with Docker compose. A pixiv cookie is required at `PIXIVUTIL_COOK
 docker compose up --build --remove-orphans
 ```
 
-This project uses `uv` inside the Docker image to install and run the app.
-Make a request to download an artwork:
+This project uses `uv` inside the Docker image to install and run the app. Make a request to download an artwork:
 
 ```sh
 curl -X POST http://localhost:8000/api/queue/download/artwork/{artwork-id-here}
@@ -31,7 +30,7 @@ curl -X POST http://localhost:8000/api/queue/download/artwork/{artwork-id-here}
 
 `/api/download/*` remains available as a deprecated compatibility alias.
 
-If `PIXIVUTIL_SERVER_API_KEY` is not set (or is empty), API key authentication is disabled.
+If `PIXIVUTIL_SERVER_API_KEY` is not set (or is empty), API key authentication is disabled. If it is set, the request above needs an `Authorization: Bearer <your-api-key>` header.
 
 An nginx [configuration file](/nginx/default.conf) is attached for your reverse proxy reference.
 
@@ -50,8 +49,7 @@ For example, the server supports the following endpoints:
 
 #### [Dead letter queue (DLQ)](/docs/api/dlq.md)
 
-API endpoints to inspect, replay, and purge failed worker messages in the dead
-letter queue.
+API endpoints to inspect, replay, and purge failed worker messages in the dead letter queue.
 
 #### [Download queueing](/docs/api/download.md)
 
@@ -62,6 +60,9 @@ The following jobs are supported via PixivUtil server API:
 - Download artworks by member ID
 - Download artwork by image ID
 - Download artworks by tag
+- Delete an artwork from the database and filesystem
+
+All queue endpoints accept an optional `priority` query parameter (`1`-`3`, where `3` is highest). Defaults are chosen per endpoint so that cheap single-artwork requests outrank long bulk crawls.
 
 #### [Health](/docs/api/health.md)
 
@@ -73,6 +74,10 @@ API endpoints to queue metadata downloads for worker from server. Metadata inclu
 
 This is helpful when you have an artwork downloaded, but it's old/outdated and you want to re-fetch only the metadata.
 
+#### [Metrics](/docs/api/metrics.md)
+
+Prometheus metrics endpoint, covering database counts, disk and system usage, queue/DLQ depth, and HTTP request statistics.
+
 #### [Server](/docs/api/server.md)
 
 Server-related API endpoints, such as get cookie, update cookie, delete database, and delete downloads.
@@ -83,7 +88,17 @@ PixivUtil server applies a downstream server flavor of PixivUtil2 called "Server
 
 For further configuration, apply them at `.pixivUtil2/conf/conf.ini` (refer to [Pixivutil2](https://github.com/Nandaka/PixivUtil2) configuration options). You should shutdown PixivUtil server and remove the backup `.ini` file before applying the changes and restarting.
 
-Supported environment variable overrides. See `PixivServer/configuration/pixivutil.py`.
+Supported environment variables, defined across `PixivServer/config/`:
+
+| Variable | Default | Purpose |
+| --- | --- | --- |
+| `PIXIVUTIL_COOKIE` | (none) | Pixiv session cookie. Required. |
+| `PIXIVUTIL_SERVER_API_KEY` | (unset) | Enables API key authentication when set. |
+| `PIXIVUTIL_SERVER_ENV` | `production` | `production` or `development`. See [Environments](#environments). |
+| `RABBITMQ_BROKER_URL` | `amqp://guest:guest@rabbitmq:5672` | Celery broker. |
+| `RABBITMQ_MANAGEMENT_URL` | `http://guest:guest@rabbitmq:15672` | Used to collect queue depth metrics. |
+
+`PUID`, `PGID`, and `CELERYBEAT_SCHEDULE` are consumed by the container entrypoint and Celery beat rather than by the application config objects; see `docker-compose.yml`.
 
 ### User Configuration
 
@@ -108,9 +123,16 @@ Header format:
 Authorization: Bearer <your-api-key>
 ```
 
-## Architecture and Development
+### Environments
 
-When running PixivUtil server in development, set `PIXIVUTIL_SERVER_ENV=development`. This will enable debug logging level.
+`PIXIVUTIL_SERVER_ENV` selects server environment.
+
+- `production` (default)
+- `development`
+
+If set to `development`, enables debug logging and mounts `/api/dev/*` router with a set of testing endpoints.
+
+## Architecture and Development
 
 PixivUtil server is a Python project based on PixivUtil2 as its API client engine. PixivUtil2 is a separate git repository added to this as a submodule.
 
@@ -142,6 +164,7 @@ PixivUtil Server applies server-managed SQLite runtime settings. These settings 
 uv sync --extra pixivutil2              # sync dev + PixivUtil2 dependencies
 uv run pytest tests                     # run tests
 uv run ruff check .                     # run ruff lint check
+uv run pyright                          # run type checks
 ```
 
 The project also uses `uv` as the build runtime with `uv_build`, which significantly speeds up build times. On a raspberry pi, building the Dockerfile with `uv_build` takes ~5m, 3m less than with default `pip`.

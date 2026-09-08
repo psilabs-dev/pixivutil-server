@@ -11,11 +11,11 @@ license = { file = "LICENSE" }
 authors = [
   { name = "psilabs-dev" }
 ]
-version = "2.4.6"
+version = "2.4.7"
 dependencies = [
   "aiofiles>=25.1.0",
   "celery>=5.5.3",
-  "fastapi>=0.122.0",
+  "fastapi>=0.141.1",
   "pixivutil-server-common>=0.1.0",
   "prometheus-client>=0.24.1",
   "psutil>=7.2.2",
@@ -34,7 +34,7 @@ pixivutil2 = [
   "curl-cffi>=0.11.3",
   "demjson3>=3.0.0",
   "mechanize>=0.4.5",
-  "pillow>=12.2.0",
+  "pillow>=12.3.0",
   "pysocks>=1.7.1",
 ]
 
