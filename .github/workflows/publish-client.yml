@@ -4,13 +4,14 @@ on:
   push:
     tags:
       - "client-v*"
+  workflow_dispatch:
 
 jobs:
   tests:
     uses: ./.github/workflows/tests.yml
 
   build:
-    name: Build
+    name: Build client package
     runs-on: ubuntu-latest
     needs: tests
 
@@ -38,7 +39,7 @@ jobs:
           path: dist/
 
   publish:
-    name: Publish
+    name: Publish client package
     needs: build
     runs-on: ubuntu-latest
 

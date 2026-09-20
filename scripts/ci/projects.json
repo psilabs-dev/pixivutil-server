@@ -1,0 +1,33 @@
+{
+  "common": {
+    "manifest": "PixivServerCommon/pyproject.toml",
+    "tag_prefix": "common-v",
+    "depends_on": [],
+    "watch": [
+      "PixivServerCommon/pixivutil_server_common",
+      "PixivServerCommon/pyproject.toml"
+    ]
+  },
+  "server": {
+    "manifest": "pyproject.toml",
+    "tag_prefix": "v",
+    "depends_on": [
+      "common"
+    ],
+    "watch": [
+      "PixivServer",
+      "pyproject.toml"
+    ]
+  },
+  "client": {
+    "manifest": "PixivUtilClient/pyproject.toml",
+    "tag_prefix": "client-v",
+    "depends_on": [
+      "common"
+    ],
+    "watch": [
+      "PixivUtilClient/pixivutil_client",
+      "PixivUtilClient/pyproject.toml"
+    ]
+  }
+}
