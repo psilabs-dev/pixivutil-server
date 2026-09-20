@@ -1,0 +1,116 @@
+name: Release
+
+on:
+  push:
+    branches:
+      - main
+
+permissions:
+  contents: read
+
+concurrency:
+  group: release
+  cancel-in-progress: false
+
+jobs:
+  plan:
+    name: Plan
+    runs-on: ubuntu-latest
+
+    outputs:
+      common: ${{ steps.plan.outputs.common }}
+      common_tag: ${{ steps.plan.outputs.common_tag }}
+      client: ${{ steps.plan.outputs.client }}
+      client_tag: ${{ steps.plan.outputs.client_tag }}
+      server: ${{ steps.plan.outputs.server }}
+      server_tag: ${{ steps.plan.outputs.server_tag }}
+
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - uses: astral-sh/setup-uv@v7
+
+      - name: Plan release
+        id: plan
+        run: uv run --script scripts/ci/release_plan.py
+
+  common:
+    name: Release common
+    needs: plan
+    if: needs.plan.outputs.common == 'true'
+    runs-on: ubuntu-latest
+
+    permissions:
+      contents: write
+      actions: write
+
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Tag
+        run: ./scripts/ci/push_tag.sh "${{ needs.plan.outputs.common_tag }}"
+
+      - name: Publish and wait
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: ./scripts/ci/dispatch_wait.sh publish-common.yml "${{ needs.plan.outputs.common_tag }}" "${{ github.sha }}"
+
+  client:
+    name: Release client
+    needs: [plan, common]
+    if: >-
+      always()
+      && needs.plan.result == 'success'
+      && needs.plan.outputs.client == 'true'
+      && needs.common.result != 'failure'
+      && needs.common.result != 'cancelled'
+    runs-on: ubuntu-latest
+
+    permissions:
+      contents: write
+      actions: write
+
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Tag
+        run: ./scripts/ci/push_tag.sh "${{ needs.plan.outputs.client_tag }}"
+
+      - name: Publish and wait
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: ./scripts/ci/dispatch_wait.sh publish-client.yml "${{ needs.plan.outputs.client_tag }}" "${{ github.sha }}"
+
+  server:
+    name: Release server image
+    needs: [plan, common]
+    if: >-
+      always()
+      && needs.plan.result == 'success'
+      && needs.plan.outputs.server == 'true'
+      && needs.common.result != 'failure'
+      && needs.common.result != 'cancelled'
+    runs-on: ubuntu-latest
+
+    permissions:
+      contents: write
+      actions: write
+
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Tag
+        run: ./scripts/ci/push_tag.sh "${{ needs.plan.outputs.server_tag }}"
+
+      - name: Publish and wait
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: ./scripts/ci/dispatch_wait.sh publish-docker.yml "${{ needs.plan.outputs.server_tag }}" "${{ github.sha }}"
