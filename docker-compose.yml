@@ -1,3 +1,5 @@
+# developer reference only.
+
 volumes:
   rabbitmq-data:
   pixivutil-data:
