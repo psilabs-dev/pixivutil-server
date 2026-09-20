@@ -56,6 +56,9 @@ class PixivMasterMember(BaseModel):
     is_deleted: int
     member_token: str | None = Field(None)
 
+    def display_name(self) -> str:
+        return f"{self.name} ({self.member_id})"
+
 
 class PixivMasterImage(BaseModel):
     image_id: int
