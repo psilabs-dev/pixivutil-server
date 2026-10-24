@@ -32,11 +32,11 @@ curl -X POST http://localhost:8000/api/queue/download/artwork/{artwork-id-here}
 
 If `PIXIVUTIL_SERVER_API_KEY` is not set (or is empty), API key authentication is disabled. If it is set, the request above needs an `Authorization: Bearer <your-api-key>` header.
 
-An nginx [configuration file](/nginx/default.conf) is attached for your reverse proxy reference.
+An nginx [configuration file](nginx/default.conf) is attached for your reverse proxy reference.
 
 ### API Reference
 
-#### [Database](/docs/api/database.md)
+#### [Database](docs/api/database.md)
 
 Endpoints to get metadata from the PixivUtil2 database.
 
@@ -47,11 +47,11 @@ For example, the server supports the following endpoints:
 - Get tag metadata by ID
 - Get series metadata by ID
 
-#### [Dead letter queue (DLQ)](/docs/api/dlq.md)
+#### [Dead letter queue (DLQ)](docs/api/dlq.md)
 
 API endpoints to inspect, replay, and purge failed worker messages in the dead letter queue.
 
-#### [Download queueing](/docs/api/download.md)
+#### [Download queueing](docs/api/download.md)
 
 API endpoints to queue content (artwork) downloads for worker from server.
 
@@ -64,21 +64,21 @@ The following jobs are supported via PixivUtil server API:
 
 All queue endpoints accept an optional `priority` query parameter (`1`-`3`, where `3` is highest). Defaults are chosen per endpoint so that cheap single-artwork requests outrank long bulk crawls.
 
-#### [Health](/docs/api/health.md)
+#### [Health](docs/api/health.md)
 
 Health-related API endpoints, such as healthcheck for Docker containers.
 
-#### [Metadata queueing](/docs/api/metadata.md)
+#### [Metadata queueing](docs/api/metadata.md)
 
 API endpoints to queue metadata downloads for worker from server. Metadata includes artist, artwork, series, and tag.
 
 This is helpful when you have an artwork downloaded, but it's old/outdated and you want to re-fetch only the metadata.
 
-#### [Metrics](/docs/api/metrics.md)
+#### [Metrics](docs/api/metrics.md)
 
 Prometheus metrics endpoint, covering database counts, disk and system usage, queue/DLQ depth, and HTTP request statistics.
 
-#### [Server](/docs/api/server.md)
+#### [Server](docs/api/server.md)
 
 Server-related API endpoints, such as get cookie, update cookie, delete database, and delete downloads.
 
@@ -171,4 +171,4 @@ The project also uses `uv` as the build runtime with `uv_build`, which significa
 
 ## PixivUtil Client
 
-PixivUtil client is an asynchronous API client for PixivUtil server. See the client [README](/PixivUtilClient/README.md).
+PixivUtil client is an asynchronous API client for PixivUtil server. See the client [README](PixivUtilClient/README.md).
