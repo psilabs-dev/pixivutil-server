@@ -28,13 +28,13 @@ dependencies = [
 pixivutil2 = [
   "beautifulsoup4>=4.9.3",
   "browser-cookie3>=0.20.1",
-  "certifi>=2021.5.30",
+  "certifi>=2026.10.19",
   "cloudscraper>=1.2.58",
   "colorama>=0.4.4",
   "curl-cffi>=0.11.3",
   "demjson3>=3.0.0",
   "mechanize>=0.4.5",
-  "pillow>=12.3.0",
+  "pillow>=13.0.0",
   "pysocks>=1.7.1",
 ]
 
